@@ -304,6 +304,7 @@ local function checkGhostOrb()
 end
 
 -- === CHECK NEW EVIDENCES ===
+-- === PERBAIKAN CHECK WITHERED ===
 local function checkWithered()
     local items = workspace:FindFirstChild("Items")
     if not items then return false end
@@ -311,11 +312,13 @@ local function checkWithered()
     local item9 = items:FindFirstChild("9")
     if item9 then
         local photoRewardType = item9:GetAttribute("PhotoRewardType")
-        return photoRewardType ~= nil and photoRewardType ~= ""
+        -- Cek jika PhotoRewardType ada dan berisi nilai tertentu
+        return photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "withered"
     end
     return false
 end
 
+-- === PERBAIKAN CHECK WRITING ===
 local function checkWriting()
     local items = workspace:FindFirstChild("Items")
     if not items then return false end
@@ -323,6 +326,34 @@ local function checkWriting()
     local item9 = items:FindFirstChild("9")
     if item9 then
         local photoRewardType = item9:GetAttribute("PhotoRewardType")
+        -- Cek jika PhotoRewardType ada dan berisi nilai tertentu
+        return photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "ghostwriting"
+    end
+    return false
+end
+
+-- === ALTERNATIVE CHECK WRITING & WITHERED (JIKA ADA NILAI STRING APAPUN) ===
+local function checkWriting()
+    local items = workspace:FindFirstChild("Items")
+    if not items then return false end
+    
+    local item9 = items:FindFirstChild("9")
+    if item9 then
+        local photoRewardType = item9:GetAttribute("PhotoRewardType")
+        -- Cek jika PhotoRewardType ada dan berisi nilai apapun
+        return photoRewardType ~= nil and photoRewardType ~= ""
+    end
+    return false
+end
+
+local function checkWithered()
+    local items = workspace:FindFirstChild("Items")
+    if not items then return false end
+    
+    local item9 = items:FindFirstChild("9")
+    if item9 then
+        local photoRewardType = item9:GetAttribute("PhotoRewardType")
+        -- Cek jika PhotoRewardType ada dan berisi nilai apapun
         return photoRewardType ~= nil and photoRewardType ~= ""
     end
     return false
@@ -359,6 +390,73 @@ local function getDifficulty()
     return "Unknown"
 end
 
+-- === CHECK ENERGY ===
+local function getEnergy()
+    local success, result = pcall(function()
+        -- Cek apakah UI EnergyMonitor ada
+        local energyMonitor = LocalPlayer.PlayerGui:FindFirstChild("EnergyMonitor")
+        if not energyMonitor then return "Unknown" end
+        
+        local container = energyMonitor:FindFirstChild("Container")
+        if not container then return "Unknown" end
+        
+        local playerList = container:FindFirstChild("PlayerList")
+        if not playerList then return "Unknown" end
+        
+        -- Cari element dengan nama "PaleAlt7" atau pattern serupa
+        local energyElement = playerList:FindFirstChild("PaleAlt7")
+        if not energyElement then
+            -- Jika tidak ditemukan PaleAlt7, coba cari element lain yang mengandung "Energy"
+            for _, child in pairs(playerList:GetChildren()) do
+                if child:IsA("Frame") or child:IsA("TextLabel") or child:IsA("TextButton") then
+                    local energyValue = child:FindFirstChild("Energy")
+                    if energyValue and energyValue:IsA("TextLabel") then
+                        return energyValue.Text
+                    end
+                end
+            end
+            return "Unknown"
+        end
+        
+        -- Ambil nilai Energy dari element tersebut
+        local energyValue = energyElement:FindFirstChild("Energy")
+        if energyValue and energyValue:IsA("TextLabel") then
+            return energyValue.Text
+        end
+        
+        return "Unknown"
+    end)
+    
+    if success then
+        return result
+    else
+        return "Unknown"
+    end
+end
+
+-- === ALTERNATIVE CHECK ENERGY (LEBIH ROBUST) ===
+local function getEnergyRobust()
+    local success, result = pcall(function()
+        local energyMonitor = LocalPlayer.PlayerGui:FindFirstChild("EnergyMonitor")
+        if not energyMonitor then return "Unknown" end
+        
+        -- Cari semua descendant yang mungkin mengandung nilai energy
+        for _, guiObject in pairs(energyMonitor:GetDescendants()) do
+            if guiObject:IsA("TextLabel") or guiObject:IsA("TextButton") then
+                local text = guiObject.Text
+                -- Cek jika text mengandung indikator energy (angka, persen, atau kata "Energy")
+                if text and (string.match(text, "%d+%%") or string.match(text, "%d+") or string.find(string.lower(text), "energy")) then
+                    return text
+                end
+            end
+        end
+        
+        return "Unknown"
+    end)
+    
+    return success and result or "Unknown"
+end
+
 -- === VARIABEL LASER VISIBLE ===
 local laserVisibleEver = false
 
@@ -388,6 +486,7 @@ local function updateAll()
     local writing = checkWriting()
     local temperature = getTemperature()
     local difficulty = getDifficulty()
+    local energy = getEnergy()  -- Tambahkan energy
     
     if label then
         label.Text = "Ghost | Age: " .. age
@@ -408,6 +507,7 @@ local function updateAll()
     if detailsWithered then detailsWithered.Text = "🍂 Withered: " .. tostring(withered) end
     if detailsWriting then detailsWriting.Text = "📝 Writing: " .. tostring(writing) end
     if detailsTemperature then detailsTemperature.Text = "🌡️ Temperature: " .. tostring(temperature) end
+    if detailsEnergy then detailsEnergy.Text = "⚡ Energy: " .. tostring(energy) end  -- Tambahkan energy
     if detailsDifficulty then detailsDifficulty.Text = "🎯 Difficulty: " .. tostring(difficulty) end
     
     if vexLabel then
@@ -1306,8 +1406,8 @@ screenGui.Parent = playerGui
 screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.fromOffset(650, 750)  -- Diperbesar
-mainFrame.Position = UDim2.new(0.5, -325, 0.5, -375)  -- Diperbesar
+mainFrame.Size = UDim2.fromOffset(650, 800)  -- Diperbesar
+mainFrame.Position = UDim2.new(0.5, -325, 0.5, -400)  -- Diperbesar
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
@@ -1568,14 +1668,19 @@ detailsTemperature.Font = Enum.Font.GothamBold
 detailsTemperature.TextSize = 12
 detailsTemperature.TextXAlignment = Enum.TextXAlignment.Left
 
+-- TAMBAHKAN ENERGY EVIDENCE
+detailsEnergy = Instance.new("TextLabel", rightColumn)
+detailsEnergy.Size = UDim2.new(1, 0, 0, 20)
+detailsEnergy.Position = UDim2.fromOffset(0, 365)
+detailsEnergy.BackgroundTransparency = 1
+detailsEnergy.TextColor3 = Color3.fromRGB(255, 255, 100)  -- Warna kuning terang untuk energy
+detailsEnergy.Font = Enum.Font.GothamBold
+detailsEnergy.TextSize = 12
+detailsEnergy.TextXAlignment = Enum.TextXAlignment.Left
+
 detailsDifficulty = Instance.new("TextLabel", rightColumn)
 detailsDifficulty.Size = UDim2.new(1, 0, 0, 20)
-detailsDifficulty.Position = UDim2.fromOffset(0, 365)
-detailsDifficulty.BackgroundTransparency = 1
-detailsDifficulty.TextColor3 = Color3.fromRGB(255, 100, 100)
-detailsDifficulty.Font = Enum.Font.GothamBold
-detailsDifficulty.TextSize = 12
-detailsDifficulty.TextXAlignment = Enum.TextXAlignment.Left
+detailsDifficulty.Position = UDim2.fromOffset(0, 390)  -- Posisi di
 
 vexLabel = Instance.new("TextLabel", rightColumn)
 vexLabel.Size = UDim2.new(1, 0, 0, 30)
