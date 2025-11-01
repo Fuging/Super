@@ -359,27 +359,189 @@ local function checkWithered()
     return false
 end
 
-local function getTemperature()
-    local items = workspace:FindFirstChild("Items")
-    if not items then return "Unknown" end
+-- === VARIABEL CLONED THERMOMETER ===
+local clonedThermometer = nil
+
+-- === FUNGSI UNTUK MENG-CLONE DAN MENYALAKAN THERMOMETER ===
+local function createThermometerClone()
+    if clonedThermometer then
+        clonedThermometer:Destroy()
+        clonedThermometer = nil
+    end
     
-    local item2 = items:FindFirstChild("2")
-    if item2 then
-        local screen = item2:FindFirstChild("Screen")
-        if screen then
-            local surfaceGui = screen:FindFirstChild("SurfaceGui")
-            if surfaceGui then
-                local frame = surfaceGui:FindFirstChild("Frame")
-                if frame then
-                    local textLabel = frame:FindFirstChild("TextLabel")
-                    if textLabel then
-                        return textLabel.Text
+    local items = workspace:FindFirstChild("Items")
+    if not items then return end
+    
+    local originalThermo = items:FindFirstChild("2")
+    if not originalThermo then return end
+    
+    -- Clone thermometer
+    clonedThermometer = originalThermo:Clone()
+    clonedThermometer.Name = "ClonedThermometer"
+    clonedThermometer.Parent = ghost
+    
+    -- Atur posisi ke tengah ghost
+    local ghostCFrame
+    if ghost:IsA("Model") and ghost.PrimaryPart then
+        ghostCFrame = ghost.PrimaryPart.CFrame
+    elseif ghost:IsA("BasePart") then
+        ghostCFrame = ghost.CFrame
+    else
+        local firstPart = ghost:FindFirstChildWhichIsA("BasePart")
+        if firstPart then
+            ghostCFrame = firstPart.CFrame
+        else
+            ghostCFrame = CFrame.new(0, 0, 0)
+        end
+    end
+    
+    if clonedThermometer:IsA("Model") and clonedThermometer.PrimaryPart then
+        clonedThermometer:SetPrimaryPartCFrame(ghostCFrame)
+    elseif clonedThermometer:IsA("BasePart") then
+        clonedThermometer.CFrame = ghostCFrame
+    end
+    
+    -- Buat tidak terlihat dan tidak ada collision
+    for _, part in ipairs(clonedThermometer:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Transparency = 1
+            part.CanCollide = false
+            part.Anchored = true
+            part.Massless = true
+        end
+    end
+    
+    -- Coba nyalakan thermometer
+    spawn(function()
+        -- Tunggu sebentar untuk memastikan clone sudah siap
+        task.wait(0.5)
+        
+        -- Method 1: Coba gunakan ToggleItemState seperti pada item elektronik lainnya
+        local success1 = pcall(function()
+            game:GetService("ReplicatedStorage").Events.ToggleItemState:FireServer({clonedThermometer})
+        end)
+        
+        if success1 then
+            print("Cloned thermometer turned on using ToggleItemState")
+        else
+            -- Method 2: Coba set atribut langsung
+            local success2 = pcall(function()
+                clonedThermometer:SetAttribute("On", true)
+            end)
+            
+            if success2 then
+                print("Cloned thermometer turned on using attribute")
+            else
+                -- Method 3: Coba cari dan aktifkan script tertentu
+                for _, script in ipairs(clonedThermometer:GetDescendants()) do
+                    if script:IsA("Script") and script.Name == "ThermoScript" then
+                        script.Enabled = true
                     end
                 end
+                print("Cloned thermometer scripts enabled")
+            end
+        end
+        
+        -- Method 4: Coba simulasi klik pada screen jika ada
+        local screen = clonedThermometer:FindFirstChild("Screen")
+        if screen then
+            local clickDetector = screen:FindFirstChildWhichIsA("ClickDetector")
+            if clickDetector then
+                pcall(function()
+                    -- Simulasi klik untuk menyalakan
+                    clickDetector.MaxActivationDistance = 100
+                    fireclickdetector(clickDetector)
+                    print("Cloned thermometer activated via click detector")
+                end)
+            end
+        end
+    end)
+    
+    print("Cloned thermometer created and activated inside ghost")
+    return clonedThermometer
+end
+
+-- === PERBAIKAN FUNGSI GET TEMPERATURE ===
+local function getTemperature()
+    -- Coba baca dari thermometer asli terlebih dahulu
+    local items = workspace:FindFirstChild("Items")
+    if items then
+        local thermo = items:FindFirstChild("2")
+        if thermo then
+            local temperature = readThermometerDisplay(thermo)
+            if temperature ~= "Unknown" then
+                return temperature
             end
         end
     end
+    
+    -- Jika thermometer asli tidak ada atau tidak menyala, baca dari clone
+    if clonedThermometer then
+        local temperature = readThermometerDisplay(clonedThermometer)
+        if temperature ~= "Unknown" then
+            return temperature
+        end
+    end
+    
     return "Unknown"
+end
+
+-- === FUNGSI UNTUK MEMBACA DISPLAY THERMOMETER ===
+local function readThermometerDisplay(thermo)
+    -- Coba berbagai kemungkinan struktur UI thermometer
+    local possiblePaths = {
+        {"Screen", "SurfaceGui", "Frame", "TextLabel"},
+        {"Screen", "SurfaceGui", "TextLabel"},
+        {"Display", "SurfaceGui", "Frame", "TextLabel"},
+        {"Display", "SurfaceGui", "TextLabel"},
+        {"ThermoScreen", "SurfaceGui", "Frame", "TextLabel"},
+        {"ThermoScreen", "SurfaceGui", "TextLabel"}
+    }
+    
+    for _, path in ipairs(possiblePaths) do
+        local current = thermo
+        local valid = true
+        
+        for _, partName in ipairs(path) do
+            current = current and current:FindFirstChild(partName)
+            if not current then
+                valid = false
+                break
+            end
+        end
+        
+        if valid and current:IsA("TextLabel") and current.Text and current.Text ~= "" then
+            return current.Text
+        end
+    end
+    
+    -- Coba cari TextLabel secara langsung di semua descendant
+    for _, descendant in ipairs(thermo:GetDescendants()) do
+        if descendant:IsA("TextLabel") and descendant.Text and descendant.Text ~= "" then
+            -- Filter hanya teks yang kemungkinan adalah suhu (mengandung angka atau simbol suhu)
+            local text = descendant.Text
+            if string.match(text, "%d") or string.find(text, "°") or string.find(text, "C") or string.find(text, "F") then
+                return text
+            end
+        end
+    end
+    
+    return "Unknown"
+end
+
+-- === AUTO CREATE THERMOMETER CLONE ===
+local function ensureThermometerClone()
+    if not ghost or not ghost.Parent then return end
+    
+    local items = workspace:FindFirstChild("Items")
+    if not items then return end
+    
+    local originalThermo = items:FindFirstChild("2")
+    if originalThermo and not clonedThermometer then
+        -- Tunggu sebentar untuk memastikan game sudah fully loaded
+        wait(3)
+        createThermometerClone()
+    end
 end
 
 local function getDifficulty()
@@ -439,6 +601,7 @@ end
 local laserVisibleEver = false
 
 -- === UPDATE TEXT & DETAILS (DENGAN SEMUA EVIDENCE) ===
+-- === PERBAIKAN UPDATE ALL ===
 local function updateAll()
     if not ghost or not ghost.Parent then return end
     
