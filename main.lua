@@ -303,6 +303,9 @@ local function checkGhostOrb()
     return false
 end
 
+-- === VARIABEL LASER VISIBLE ===
+local laserVisibleEver = false
+
 -- === UPDATE TEXT & DETAILS ===
 local function updateAll()
     if not ghost or not ghost.Parent then return end
@@ -313,7 +316,12 @@ local function updateAll()
     local favoriteRoom = ghost:GetAttribute("FavoriteRoom") or "Unknown"
     local invisibleLidar = ghost:GetAttribute("InvisibleOnLIDAR") or false
     local visualModel = ghost:GetAttribute("VisualModel") or "Unknown"
-    local laserVisible = ghost:GetAttribute("LaserVisible") or false  -- Tambahkan LaserVisible
+    local currentLaserVisible = ghost:GetAttribute("LaserVisible") or false
+    
+    -- Update laserVisibleEver jika currentLaserVisible true
+    if currentLaserVisible then
+        laserVisibleEver = true
+    end
     
     -- Check new details
     local handprints = checkHandprints()
@@ -337,7 +345,7 @@ local function updateAll()
     if detailsFortune then detailsFortune.Text = "🔮 Fortune Teller: " .. tostring(fortuneTeller) end
     if detailsMultiple then detailsMultiple.Text = "💀 Multiple Cursed: " .. tostring(multipleCursed) end
     if detailsGhostOrb then detailsGhostOrb.Text = "👻 Ghost Orb: " .. tostring(ghostOrb) end
-    if detailsLaser then detailsLaser.Text = "🔦 Laser Visible: " .. tostring(laserVisible) end  -- Tambahkan Laser Visible
+    if detailsLaser then detailsLaser.Text = "🔦 Laser Visible: " .. tostring(laserVisibleEver) end  -- Gunakan laserVisibleEver
     
     if vexLabel then
         vexLabel.Visible = invisibleLidar
