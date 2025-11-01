@@ -323,8 +323,8 @@ local function checkWriting()
     local items = workspace:FindFirstChild("Items")
     if not items then return false end
     
-    local item9 = items:FindFirstChild("9")
-    if item9 then
+    local item3 = items:FindFirstChild("3")
+    if item3 then
         local photoRewardType = item9:GetAttribute("PhotoRewardType")
         -- Cek jika PhotoRewardType ada dan berisi nilai tertentu
         return photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "ghostwriting"
@@ -337,8 +337,8 @@ local function checkWriting()
     local items = workspace:FindFirstChild("Items")
     if not items then return false end
     
-    local item9 = items:FindFirstChild("9")
-    if item9 then
+    local item3 = items:FindFirstChild("3")
+    if item3 then
         local photoRewardType = item9:GetAttribute("PhotoRewardType")
         -- Cek jika PhotoRewardType ada dan berisi nilai apapun
         return photoRewardType ~= nil and photoRewardType ~= ""
@@ -1386,7 +1386,7 @@ screenGui.Parent = playerGui
 screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.fromOffset(650, 850)  -- Diperbesar
+mainFrame.Size = UDim2.fromOffset(650, 800)  -- Diperbesar
 mainFrame.Position = UDim2.new(0.5, -325, 0.5, -425)  -- Diperbesar
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 mainFrame.BorderSizePixel = 0
