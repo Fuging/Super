@@ -391,9 +391,9 @@ local function getDifficulty()
 end
 
 -- === CHECK ENERGY ===
+-- === PERBAIKAN CHECK ENERGY ===
 local function getEnergy()
     local success, result = pcall(function()
-        -- Cek apakah UI EnergyMonitor ada
         local energyMonitor = LocalPlayer.PlayerGui:FindFirstChild("EnergyMonitor")
         if not energyMonitor then return "Unknown" end
         
@@ -403,50 +403,28 @@ local function getEnergy()
         local playerList = container:FindFirstChild("PlayerList")
         if not playerList then return "Unknown" end
         
-        -- Cari element dengan nama "PaleAlt7" atau pattern serupa
-        local energyElement = playerList:FindFirstChild("PaleAlt7")
-        if not energyElement then
-            -- Jika tidak ditemukan PaleAlt7, coba cari element lain yang mengandung "Energy"
-            for _, child in pairs(playerList:GetChildren()) do
-                if child:IsA("Frame") or child:IsA("TextLabel") or child:IsA("TextButton") then
-                    local energyValue = child:FindFirstChild("Energy")
-                    if energyValue and energyValue:IsA("TextLabel") then
-                        return energyValue.Text
+        -- Cari semua elemen yang mungkin mengandung nilai energy
+        for _, child in pairs(playerList:GetChildren()) do
+            -- Cek jika ini adalah SelectionImageObject atau Frame
+            if child:IsA("Frame") or child:IsA("ImageButton") or child.ClassName == "SelectionImageObject" then
+                -- Cari child bernama "Energy" atau teks yang mengandung nilai energy
+                local energyChild = child:FindFirstChild("Energy")
+                if energyChild then
+                    if energyChild:IsA("TextLabel") then
+                        return energyChild.Text
+                    elseif energyChild:IsA("ImageLabel") then
+                        -- Jika berupa gambar, coba baca dari atribut atau properti lain
+                        return "Visual"
                     end
                 end
-            end
-            return "Unknown"
-        end
-        
-        -- Ambil nilai Energy dari element tersebut
-        local energyValue = energyElement:FindFirstChild("Energy")
-        if energyValue and energyValue:IsA("TextLabel") then
-            return energyValue.Text
-        end
-        
-        return "Unknown"
-    end)
-    
-    if success then
-        return result
-    else
-        return "Unknown"
-    end
-end
-
--- === ALTERNATIVE CHECK ENERGY (LEBIH ROBUST) ===
-local function getEnergyRobust()
-    local success, result = pcall(function()
-        local energyMonitor = LocalPlayer.PlayerGui:FindFirstChild("EnergyMonitor")
-        if not energyMonitor then return "Unknown" end
-        
-        -- Cari semua descendant yang mungkin mengandung nilai energy
-        for _, guiObject in pairs(energyMonitor:GetDescendants()) do
-            if guiObject:IsA("TextLabel") or guiObject:IsA("TextButton") then
-                local text = guiObject.Text
-                -- Cek jika text mengandung indikator energy (angka, persen, atau kata "Energy")
-                if text and (string.match(text, "%d+%%") or string.match(text, "%d+") or string.find(string.lower(text), "energy")) then
-                    return text
+                
+                -- Coba cari TextLabel langsung di dalam child
+                for _, descendant in pairs(child:GetDescendants()) do
+                    if descendant:IsA("TextLabel") and string.find(string.lower(descendant.Text or ""), "energy") then
+                        return descendant.Text
+                    elseif descendant:IsA("TextLabel") and string.match(descendant.Text or "", "%d+%%?") then
+                        return descendant.Text
+                    end
                 end
             end
         end
@@ -460,7 +438,7 @@ end
 -- === VARIABEL LASER VISIBLE ===
 local laserVisibleEver = false
 
--- === UPDATE TEXT & DETAILS ===
+-- === UPDATE TEXT & DETAILS (DENGAN SEMUA EVIDENCE) ===
 local function updateAll()
     if not ghost or not ghost.Parent then return end
     
@@ -477,7 +455,7 @@ local function updateAll()
         laserVisibleEver = true
     end
     
-    -- Check new details
+    -- Check semua details dan evidences
     local handprints = checkHandprints()
     local fortuneTeller = checkFortuneTeller()
     local multipleCursed = checkMultipleCursed()
@@ -485,8 +463,8 @@ local function updateAll()
     local withered = checkWithered()
     local writing = checkWriting()
     local temperature = getTemperature()
+    local energy = getEnergy()
     local difficulty = getDifficulty()
-    local energy = getEnergy()  -- Tambahkan energy
     
     if label then
         label.Text = "Ghost | Age: " .. age
@@ -507,7 +485,9 @@ local function updateAll()
     if detailsWithered then detailsWithered.Text = "🍂 Withered: " .. tostring(withered) end
     if detailsWriting then detailsWriting.Text = "📝 Writing: " .. tostring(writing) end
     if detailsTemperature then detailsTemperature.Text = "🌡️ Temperature: " .. tostring(temperature) end
-    if detailsEnergy then detailsEnergy.Text = "⚡ Energy: " .. tostring(energy) end  -- Tambahkan energy
+    if detailsEnergy then detailsEnergy.Text = "⚡ Energy: " .. tostring(energy) end
+    if detailsMultiple then detailsMultiple.Text = "💀 Multiple Cursed: " .. tostring(multipleCursed) end
+    if detailsFortune then detailsFortune.Text = "🔮 Fortune Teller: " .. tostring(fortuneTeller) end
     if detailsDifficulty then detailsDifficulty.Text = "🎯 Difficulty: " .. tostring(difficulty) end
     
     if vexLabel then
@@ -1406,8 +1386,8 @@ screenGui.Parent = playerGui
 screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.fromOffset(650, 800)  -- Diperbesar
-mainFrame.Position = UDim2.new(0.5, -325, 0.5, -400)  -- Diperbesar
+mainFrame.Size = UDim2.fromOffset(650, 850)  -- Diperbesar
+mainFrame.Position = UDim2.new(0.5, -325, 0.5, -425)  -- Diperbesar
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
@@ -1613,78 +1593,49 @@ detailsModel.TextXAlignment = Enum.TextXAlignment.Left
 -- === EVIDENCES SECTION ===
 createSectionTitle(rightColumn, "🔍 EVIDENCES", UDim2.fromOffset(0, 185), Color3.fromRGB(255, 165, 0))
 
-detailsHandprints = Instance.new("TextLabel", rightColumn)
-detailsHandprints.Size = UDim2.new(1, 0, 0, 20)
-detailsHandprints.Position = UDim2.fromOffset(0, 215)
-detailsHandprints.BackgroundTransparency = 1
-detailsHandprints.TextColor3 = Color3.fromRGB(255, 200, 150)
-detailsHandprints.Font = Enum.Font.Gotham
-detailsHandprints.TextSize = 12
-detailsHandprints.TextXAlignment = Enum.TextXAlignment.Left
+-- Definisikan semua evidence dengan posisi yang teratur
+local evidenceLabels = {
+    {name = "Handprints", icon = "👣", color = Color3.fromRGB(255, 200, 150), bold = false},
+    {name = "Laser", icon = "🔦", color = Color3.fromRGB(255, 150, 50), bold = true},
+    {name = "GhostOrb", icon = "👻", color = Color3.fromRGB(100, 255, 200), bold = false},
+    {name = "Withered", icon = "🍂", color = Color3.fromRGB(150, 100, 50), bold = false},
+    {name = "Writing", icon = "📝", color = Color3.fromRGB(200, 200, 100), bold = false},
+    {name = "Temperature", icon = "🌡️", color = Color3.fromRGB(100, 200, 255), bold = true},
+    {name = "Energy", icon = "⚡", color = Color3.fromRGB(255, 255, 100), bold = true},
+    {name = "Multiple Cursed Possession", icon = "💀", color = Color3.fromRGB(255, 100, 100), bold = true},
+    {name = "Fortune Teller", icon = "🔮", color = Color3.fromRGB(200, 150, 255), bold = false},
+    {name = "Difficulty", icon = "🎯", color = Color3.fromRGB(255, 100, 100), bold = true}
+}
 
-detailsLaser = Instance.new("TextLabel", rightColumn)
-detailsLaser.Size = UDim2.new(1, 0, 0, 20)
-detailsLaser.Position = UDim2.fromOffset(0, 240)
-detailsLaser.BackgroundTransparency = 1
-detailsLaser.TextColor3 = Color3.fromRGB(255, 150, 50)
-detailsLaser.Font = Enum.Font.GothamBold
-detailsLaser.TextSize = 12
-detailsLaser.TextXAlignment = Enum.TextXAlignment.Left
+-- Buat UI untuk setiap evidence
+for i, evidence in ipairs(evidenceLabels) do
+    local detail = Instance.new("TextLabel", rightColumn)
+    detail.Size = UDim2.new(1, 0, 0, 20)
+    detail.Position = UDim2.fromOffset(0, 215 + (i * 25))
+    detail.BackgroundTransparency = 1
+    detail.TextColor3 = evidence.color
+    detail.Font = evidence.bold and Enum.Font.GothamBold or Enum.Font.Gotham
+    detail.TextSize = 12
+    detail.TextXAlignment = Enum.TextXAlignment.Left
+    detail.Name = "details" .. evidence.name
+    
+    -- Assign ke variabel global
+    if evidence.name == "Handprints" then detailsHandprints = detail
+    elseif evidence.name == "Laser" then detailsLaser = detail
+    elseif evidence.name == "GhostOrb" then detailsGhostOrb = detail
+    elseif evidence.name == "Withered" then detailsWithered = detail
+    elseif evidence.name == "Writing" then detailsWriting = detail
+    elseif evidence.name == "Temperature" then detailsTemperature = detail
+    elseif evidence.name == "Energy" then detailsEnergy = detail
+    elseif evidence.name == "Multiple Cursed Possession" then detailsMultiple = detail
+    elseif evidence.name == "Fortune Teller" then detailsFortune = detail
+    elseif evidence.name == "Difficulty" then detailsDifficulty = detail end
+end
 
-detailsGhostOrb = Instance.new("TextLabel", rightColumn)
-detailsGhostOrb.Size = UDim2.new(1, 0, 0, 20)
-detailsGhostOrb.Position = UDim2.fromOffset(0, 265)
-detailsGhostOrb.BackgroundTransparency = 1
-detailsGhostOrb.TextColor3 = Color3.fromRGB(100, 255, 200)
-detailsGhostOrb.Font = Enum.Font.Gotham
-detailsGhostOrb.TextSize = 12
-detailsGhostOrb.TextXAlignment = Enum.TextXAlignment.Left
-
--- NEW EVIDENCES
-detailsWithered = Instance.new("TextLabel", rightColumn)
-detailsWithered.Size = UDim2.new(1, 0, 0, 20)
-detailsWithered.Position = UDim2.fromOffset(0, 290)
-detailsWithered.BackgroundTransparency = 1
-detailsWithered.TextColor3 = Color3.fromRGB(150, 100, 50)
-detailsWithered.Font = Enum.Font.Gotham
-detailsWithered.TextSize = 12
-detailsWithered.TextXAlignment = Enum.TextXAlignment.Left
-
-detailsWriting = Instance.new("TextLabel", rightColumn)
-detailsWriting.Size = UDim2.new(1, 0, 0, 20)
-detailsWriting.Position = UDim2.fromOffset(0, 315)
-detailsWriting.BackgroundTransparency = 1
-detailsWriting.TextColor3 = Color3.fromRGB(200, 200, 100)
-detailsWriting.Font = Enum.Font.Gotham
-detailsWriting.TextSize = 12
-detailsWriting.TextXAlignment = Enum.TextXAlignment.Left
-
-detailsTemperature = Instance.new("TextLabel", rightColumn)
-detailsTemperature.Size = UDim2.new(1, 0, 0, 20)
-detailsTemperature.Position = UDim2.fromOffset(0, 340)
-detailsTemperature.BackgroundTransparency = 1
-detailsTemperature.TextColor3 = Color3.fromRGB(100, 200, 255)
-detailsTemperature.Font = Enum.Font.GothamBold
-detailsTemperature.TextSize = 12
-detailsTemperature.TextXAlignment = Enum.TextXAlignment.Left
-
--- TAMBAHKAN ENERGY EVIDENCE
-detailsEnergy = Instance.new("TextLabel", rightColumn)
-detailsEnergy.Size = UDim2.new(1, 0, 0, 20)
-detailsEnergy.Position = UDim2.fromOffset(0, 365)
-detailsEnergy.BackgroundTransparency = 1
-detailsEnergy.TextColor3 = Color3.fromRGB(255, 255, 100)  -- Warna kuning terang untuk energy
-detailsEnergy.Font = Enum.Font.GothamBold
-detailsEnergy.TextSize = 12
-detailsEnergy.TextXAlignment = Enum.TextXAlignment.Left
-
-detailsDifficulty = Instance.new("TextLabel", rightColumn)
-detailsDifficulty.Size = UDim2.new(1, 0, 0, 20)
-detailsDifficulty.Position = UDim2.fromOffset(0, 390)  -- Posisi di
-
+-- Vex Label (di bawah semua evidence)
 vexLabel = Instance.new("TextLabel", rightColumn)
 vexLabel.Size = UDim2.new(1, 0, 0, 30)
-vexLabel.Position = UDim2.fromOffset(0, 390)
+vexLabel.Position = UDim2.fromOffset(0, 215 + (11 * 25)) -- Setelah 10 evidence
 vexLabel.BackgroundColor3 = Color3.fromRGB(50, 20, 20)
 vexLabel.Text = "⚠️ Ghost: Vex"
 vexLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
