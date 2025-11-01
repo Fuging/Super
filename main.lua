@@ -461,31 +461,6 @@ local function createThermometerClone()
     return clonedThermometer
 end
 
--- === PERBAIKAN FUNGSI GET TEMPERATURE ===
-local function getTemperature()
-    -- Coba baca dari thermometer asli terlebih dahulu
-    local items = workspace:FindFirstChild("Items")
-    if items then
-        local thermo = items:FindFirstChild("2")
-        if thermo then
-            local temperature = readThermometerDisplay(thermo)
-            if temperature ~= "Unknown" then
-                return temperature
-            end
-        end
-    end
-    
-    -- Jika thermometer asli tidak ada atau tidak menyala, baca dari clone
-    if clonedThermometer then
-        local temperature = readThermometerDisplay(clonedThermometer)
-        if temperature ~= "Unknown" then
-            return temperature
-        end
-    end
-    
-    return "Unknown"
-end
-
 -- === FUNGSI UNTUK MEMBACA DISPLAY THERMOMETER ===
 local function readThermometerDisplay(thermo)
     -- Coba berbagai kemungkinan struktur UI thermometer
@@ -542,6 +517,31 @@ local function ensureThermometerClone()
         wait(3)
         createThermometerClone()
     end
+end
+
+-- === PERBAIKAN FUNGSI GET TEMPERATURE ===
+local function getTemperature()
+    -- Coba baca dari thermometer asli terlebih dahulu
+    local items = workspace:FindFirstChild("Items")
+    if items then
+        local thermo = items:FindFirstChild("2")
+        if thermo then
+            local temperature = readThermometerDisplay(thermo)
+            if temperature ~= "Unknown" then
+                return temperature
+            end
+        end
+    end
+    
+    -- Jika thermometer asli tidak ada atau tidak menyala, baca dari clone
+    if clonedThermometer then
+        local temperature = readThermometerDisplay(clonedThermometer)
+        if temperature ~= "Unknown" then
+            return temperature
+        end
+    end
+    
+    return "Unknown"
 end
 
 local function getDifficulty()
