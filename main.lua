@@ -303,6 +303,62 @@ local function checkGhostOrb()
     return false
 end
 
+-- === CHECK NEW EVIDENCES ===
+local function checkWithered()
+    local items = workspace:FindFirstChild("Items")
+    if not items then return false end
+    
+    local item9 = items:FindFirstChild("9")
+    if item9 then
+        local photoRewardType = item9:GetAttribute("PhotoRewardType")
+        return photoRewardType ~= nil and photoRewardType ~= ""
+    end
+    return false
+end
+
+local function checkWriting()
+    local items = workspace:FindFirstChild("Items")
+    if not items then return false end
+    
+    local item9 = items:FindFirstChild("9")
+    if item9 then
+        local photoRewardType = item9:GetAttribute("PhotoRewardType")
+        return photoRewardType ~= nil and photoRewardType ~= ""
+    end
+    return false
+end
+
+local function getTemperature()
+    local items = workspace:FindFirstChild("Items")
+    if not items then return "Unknown" end
+    
+    local item2 = items:FindFirstChild("2")
+    if item2 then
+        local screen = item2:FindFirstChild("Screen")
+        if screen then
+            local surfaceGui = screen:FindFirstChild("SurfaceGui")
+            if surfaceGui then
+                local frame = surfaceGui:FindFirstChild("Frame")
+                if frame then
+                    local textLabel = frame:FindFirstChild("TextLabel")
+                    if textLabel then
+                        return textLabel.Text
+                    end
+                end
+            end
+        end
+    end
+    return "Unknown"
+end
+
+local function getDifficulty()
+    local difficulty = workspace:GetAttribute("Difficulty")
+    if difficulty then
+        return tostring(difficulty)
+    end
+    return "Unknown"
+end
+
 -- === VARIABEL LASER VISIBLE ===
 local laserVisibleEver = false
 
@@ -328,11 +384,16 @@ local function updateAll()
     local fortuneTeller = checkFortuneTeller()
     local multipleCursed = checkMultipleCursed()
     local ghostOrb = checkGhostOrb()
+    local withered = checkWithered()
+    local writing = checkWriting()
+    local temperature = getTemperature()
+    local difficulty = getDifficulty()
     
     if label then
         label.Text = "Ghost | Age: " .. age
     end
     
+    -- Update ghost details
     if detailsAge then detailsAge.Text = "👤 Age: " .. age .. " years old" end
     if detailsGender then detailsGender.Text = "⚥ Gender: " .. gender end
     if detailsCurrent then detailsCurrent.Text = "📍 Current: " .. currentRoom end
@@ -340,12 +401,14 @@ local function updateAll()
     if detailsLidar then detailsLidar.Text = "📡 Inv. LIDAR: " .. tostring(invisibleLidar) end
     if detailsModel then detailsModel.Text = "👁️ Model: " .. visualModel end
     
-    -- Update new details
+    -- Update evidences
     if detailsHandprints then detailsHandprints.Text = "👣 Handprints: " .. tostring(handprints) end
-    if detailsFortune then detailsFortune.Text = "🔮 Fortune Teller: " .. tostring(fortuneTeller) end
-    if detailsMultiple then detailsMultiple.Text = "💀 Multiple Cursed: " .. tostring(multipleCursed) end
+    if detailsLaser then detailsLaser.Text = "🔦 Laser Visible: " .. tostring(laserVisibleEver) end
     if detailsGhostOrb then detailsGhostOrb.Text = "👻 Ghost Orb: " .. tostring(ghostOrb) end
-    if detailsLaser then detailsLaser.Text = "🔦 Laser Visible: " .. tostring(laserVisibleEver) end  -- Gunakan laserVisibleEver
+    if detailsWithered then detailsWithered.Text = "🍂 Withered: " .. tostring(withered) end
+    if detailsWriting then detailsWriting.Text = "📝 Writing: " .. tostring(writing) end
+    if detailsTemperature then detailsTemperature.Text = "🌡️ Temperature: " .. tostring(temperature) end
+    if detailsDifficulty then detailsDifficulty.Text = "🎯 Difficulty: " .. tostring(difficulty) end
     
     if vexLabel then
         vexLabel.Visible = invisibleLidar
@@ -1243,8 +1306,8 @@ screenGui.Parent = playerGui
 screenGui.ResetOnSpawn = false
 
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.fromOffset(650, 700)  -- Diperbesar
-mainFrame.Position = UDim2.new(0.5, -325, 0.5, -350)  -- Diperbesar
+mainFrame.Size = UDim2.fromOffset(650, 750)  -- Diperbesar
+mainFrame.Position = UDim2.new(0.5, -325, 0.5, -375)  -- Diperbesar
 mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
@@ -1390,7 +1453,7 @@ createSectionTitle(middleColumn, "🔧 UTILITIES", UDim2.fromOffset(0, 510), Col
 
 local deleteExitBtn = createButton(middleColumn, "🚪 DELETE EXIT DOOR", UDim2.fromOffset(0, 540), Color3.fromRGB(255, 80, 80))
 
--- === RIGHT COLUMN - GHOST DETAILS ===
+-- === RIGHT COLUMN - GHOST INFO ===
 createSectionTitle(rightColumn, "👻 GHOST INFO", UDim2.fromScale(0, 0), Color3.fromRGB(0, 255, 200))
 
 detailsAge = Instance.new("TextLabel", rightColumn)
@@ -1447,57 +1510,76 @@ detailsModel.Font = Enum.Font.Gotham
 detailsModel.TextSize = 12
 detailsModel.TextXAlignment = Enum.TextXAlignment.Left
 
--- NEW DETAILS
+-- === EVIDENCES SECTION ===
+createSectionTitle(rightColumn, "🔍 EVIDENCES", UDim2.fromOffset(0, 185), Color3.fromRGB(255, 165, 0))
+
 detailsHandprints = Instance.new("TextLabel", rightColumn)
 detailsHandprints.Size = UDim2.new(1, 0, 0, 20)
-detailsHandprints.Position = UDim2.fromOffset(0, 180)
+detailsHandprints.Position = UDim2.fromOffset(0, 215)
 detailsHandprints.BackgroundTransparency = 1
 detailsHandprints.TextColor3 = Color3.fromRGB(255, 200, 150)
 detailsHandprints.Font = Enum.Font.Gotham
 detailsHandprints.TextSize = 12
 detailsHandprints.TextXAlignment = Enum.TextXAlignment.Left
 
-detailsFortune = Instance.new("TextLabel", rightColumn)
-detailsFortune.Size = UDim2.new(1, 0, 0, 20)
-detailsFortune.Position = UDim2.fromOffset(0, 205)
-detailsFortune.BackgroundTransparency = 1
-detailsFortune.TextColor3 = Color3.fromRGB(200, 150, 255)
-detailsFortune.Font = Enum.Font.Gotham
-detailsFortune.TextSize = 12
-detailsFortune.TextXAlignment = Enum.TextXAlignment.Left
+detailsLaser = Instance.new("TextLabel", rightColumn)
+detailsLaser.Size = UDim2.new(1, 0, 0, 20)
+detailsLaser.Position = UDim2.fromOffset(0, 240)
+detailsLaser.BackgroundTransparency = 1
+detailsLaser.TextColor3 = Color3.fromRGB(255, 150, 50)
+detailsLaser.Font = Enum.Font.GothamBold
+detailsLaser.TextSize = 12
+detailsLaser.TextXAlignment = Enum.TextXAlignment.Left
 
-detailsMultiple = Instance.new("TextLabel", rightColumn)
-detailsMultiple.Size = UDim2.new(1, 0, 0, 20)
-detailsMultiple.Position = UDim2.fromOffset(0, 230)
-detailsMultiple.BackgroundTransparency = 1
-detailsMultiple.TextColor3 = Color3.fromRGB(255, 100, 100)
-detailsMultiple.Font = Enum.Font.GothamBold
-detailsMultiple.TextSize = 12
-detailsMultiple.TextXAlignment = Enum.TextXAlignment.Left
-
--- TAMBAHKAN DETAIL GHOST ORB
 detailsGhostOrb = Instance.new("TextLabel", rightColumn)
 detailsGhostOrb.Size = UDim2.new(1, 0, 0, 20)
-detailsGhostOrb.Position = UDim2.fromOffset(0, 255)
+detailsGhostOrb.Position = UDim2.fromOffset(0, 265)
 detailsGhostOrb.BackgroundTransparency = 1
 detailsGhostOrb.TextColor3 = Color3.fromRGB(100, 255, 200)
 detailsGhostOrb.Font = Enum.Font.Gotham
 detailsGhostOrb.TextSize = 12
 detailsGhostOrb.TextXAlignment = Enum.TextXAlignment.Left
 
--- TAMBAHKAN DETAIL LASER VISIBLE
-detailsLaser = Instance.new("TextLabel", rightColumn)
-detailsLaser.Size = UDim2.new(1, 0, 0, 20)
-detailsLaser.Position = UDim2.fromOffset(0, 280)
-detailsLaser.BackgroundTransparency = 1
-detailsLaser.TextColor3 = Color3.fromRGB(255, 150, 50)  -- Warna orange untuk laser
-detailsLaser.Font = Enum.Font.GothamBold
-detailsLaser.TextSize = 12
-detailsLaser.TextXAlignment = Enum.TextXAlignment.Left
+-- NEW EVIDENCES
+detailsWithered = Instance.new("TextLabel", rightColumn)
+detailsWithered.Size = UDim2.new(1, 0, 0, 20)
+detailsWithered.Position = UDim2.fromOffset(0, 290)
+detailsWithered.BackgroundTransparency = 1
+detailsWithered.TextColor3 = Color3.fromRGB(150, 100, 50)
+detailsWithered.Font = Enum.Font.Gotham
+detailsWithered.TextSize = 12
+detailsWithered.TextXAlignment = Enum.TextXAlignment.Left
+
+detailsWriting = Instance.new("TextLabel", rightColumn)
+detailsWriting.Size = UDim2.new(1, 0, 0, 20)
+detailsWriting.Position = UDim2.fromOffset(0, 315)
+detailsWriting.BackgroundTransparency = 1
+detailsWriting.TextColor3 = Color3.fromRGB(200, 200, 100)
+detailsWriting.Font = Enum.Font.Gotham
+detailsWriting.TextSize = 12
+detailsWriting.TextXAlignment = Enum.TextXAlignment.Left
+
+detailsTemperature = Instance.new("TextLabel", rightColumn)
+detailsTemperature.Size = UDim2.new(1, 0, 0, 20)
+detailsTemperature.Position = UDim2.fromOffset(0, 340)
+detailsTemperature.BackgroundTransparency = 1
+detailsTemperature.TextColor3 = Color3.fromRGB(100, 200, 255)
+detailsTemperature.Font = Enum.Font.GothamBold
+detailsTemperature.TextSize = 12
+detailsTemperature.TextXAlignment = Enum.TextXAlignment.Left
+
+detailsDifficulty = Instance.new("TextLabel", rightColumn)
+detailsDifficulty.Size = UDim2.new(1, 0, 0, 20)
+detailsDifficulty.Position = UDim2.fromOffset(0, 365)
+detailsDifficulty.BackgroundTransparency = 1
+detailsDifficulty.TextColor3 = Color3.fromRGB(255, 100, 100)
+detailsDifficulty.Font = Enum.Font.GothamBold
+detailsDifficulty.TextSize = 12
+detailsDifficulty.TextXAlignment = Enum.TextXAlignment.Left
 
 vexLabel = Instance.new("TextLabel", rightColumn)
 vexLabel.Size = UDim2.new(1, 0, 0, 30)
-vexLabel.Position = UDim2.fromOffset(0, 305)  -- Posisi diubah karena ada tambahan detail
+vexLabel.Position = UDim2.fromOffset(0, 390)
 vexLabel.BackgroundColor3 = Color3.fromRGB(50, 20, 20)
 vexLabel.Text = "⚠️ Ghost: Vex"
 vexLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
