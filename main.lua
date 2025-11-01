@@ -325,7 +325,7 @@ local function checkWriting()
     
     local item3 = items:FindFirstChild("3")
     if item3 then
-        local photoRewardType = item9:GetAttribute("PhotoRewardType")
+        local photoRewardType = item3:GetAttribute("PhotoRewardType")
         -- Cek jika PhotoRewardType ada dan berisi nilai tertentu
         return photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "ghostwriting"
     end
@@ -339,7 +339,7 @@ local function checkWriting()
     
     local item3 = items:FindFirstChild("3")
     if item3 then
-        local photoRewardType = item9:GetAttribute("PhotoRewardType")
+        local photoRewardType = item3:GetAttribute("PhotoRewardType")
         -- Cek jika PhotoRewardType ada dan berisi nilai apapun
         return photoRewardType ~= nil and photoRewardType ~= ""
     end
