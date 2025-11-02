@@ -362,19 +362,6 @@ end
 -- === VARIABEL CLONED THERMOMETER ===
 local clonedThermometer = nil
 
--- === 1. FUNGSI ENSURE THERMOMETER CLONE ===
-local function ensureThermometerClone()
-    if not ghost or not ghost.Parent then return end
-    
-    local items = workspace:FindFirstChild("Items")
-    if not items then return end
-    
-    local originalThermo = items:FindFirstChild("2")
-    if originalThermo and not clonedThermometer then
-        createThermometerClone()
-    end
-end
-
 -- === 2. FUNGSI CREATE THERMOMETER CLONE ===
 local function createThermometerClone()
     if clonedThermometer then
@@ -390,7 +377,7 @@ local function createThermometerClone()
     
     -- Clone thermometer
     clonedThermometer = originalThermo:Clone()
-    clonedThermometer.Name = "ClonedThermometer"
+    clonedThermometer.Name = "CT"
     clonedThermometer.Parent = workspace.Items
     
     -- Dapatkan posisi ghost
@@ -438,6 +425,18 @@ local function createThermometerClone()
     end)
     
     return clonedThermometer
+end
+
+local function ensureThermometerClone()
+    if not ghost or not ghost.Parent then return end
+    
+    local items = workspace:FindFirstChild("Items")
+    if not items then return end
+    
+    local originalThermo = items:FindFirstChild("2")
+    if originalThermo and not clonedThermometer then
+        createThermometerClone()
+    end
 end
 
 -- === 3. FUNGSI GET TEMPERATURE ===
