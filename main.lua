@@ -412,6 +412,7 @@ local function createThermometerClone()
         local success = pcall(function()
             local args = {[1] = workspace.Items:FindFirstChild("1000")}
             game:GetService("ReplicatedStorage").Events.ToggleItemState:FireServer(unpack(args))
+            clonedThermometer:SetAttribute("CurrentRoom", workspace.Ghost:GetAttribute("FavoriteRoom") )
         end)
         
         if success then
