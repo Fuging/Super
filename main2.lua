@@ -542,42 +542,128 @@ end
 
 -- === CHECK NEW EVIDENCES ===
 local function checkWithered()
-    local items = workspace:FindFirstChild("Items")
-    if not items then return witheredEverDetected end
-    
-    local item9 = items:FindFirstChild("9")
-    if item9 then
-        local photoRewardType = item9:GetAttribute("PhotoRewardType")
-        -- Cek jika PhotoRewardType ada dan berisi nilai tertentu
-        local currentDetection = photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "withered"
+    -- Fungsi untuk cek item 9 (book) dalam instance
+    local function checkBookInInstance(instance)
+        if not instance then return false end
         
-        -- Update status permanen
-        if currentDetection then
-            witheredEverDetected = true
+        if instance.Name == "9" then
+            local photoRewardType = instance:GetAttribute("PhotoRewardType")
+            return photoRewardType ~= nil and photoRewardType ~= ""
         end
         
-        return witheredEverDetected
+        for _, child in pairs(instance:GetDescendants()) do
+            if child.Name == "9" then
+                local photoRewardType = child:GetAttribute("PhotoRewardType")
+                return photoRewardType ~= nil and photoRewardType ~= ""
+            end
+        end
+        
+        return false
     end
+
+    -- Step 1: Cek di ToolsHolder semua player
+    for _, player in pairs(Players:GetPlayers()) do
+        local toolsHolder = player:FindFirstChild("ToolsHolder")
+        if toolsHolder then
+            local bookInTools = toolsHolder:FindFirstChild("9")
+            if bookInTools and checkBookInInstance(bookInTools) then
+                witheredEverDetected = true
+                return true
+            end
+        end
+    end
+    
+    -- Step 2: Cek di karakter semua player
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character and checkBookInInstance(player.Character) then
+            witheredEverDetected = true
+            return true
+        end
+    end
+    
+    -- Step 3: Cek di workspace.Items["9"]
+    local items = workspace:FindFirstChild("Items")
+    if items then
+        local item9 = items:FindFirstChild("9")
+        if item9 and checkBookInInstance(item9) then
+            witheredEverDetected = true
+            return true
+        end
+    end
+    
+    -- Step 4: Cek di seluruh workspace
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj.Name == "9" and (obj:IsA("Part") or obj:IsA("Model")) then
+            if checkBookInInstance(obj) then
+                witheredEverDetected = true
+                return true
+            end
+        end
+    end
+    
     return witheredEverDetected
 end
 
 local function checkWriting()
-    local items = workspace:FindFirstChild("Items")
-    if not items then return writingEverDetected end
-    
-    local item3 = items:FindFirstChild("3")
-    if item3 then
-        local photoRewardType = item3:GetAttribute("PhotoRewardType")
-        -- Cek jika PhotoRewardType ada dan berisi nilai tertentu
-        local currentDetection = photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "ghostwriting"
+    -- Fungsi untuk cek item 3 (book) dalam instance
+    local function checkBookInInstance(instance)
+        if not instance then return false end
         
-        -- Update status permanen
-        if currentDetection then
-            writingEverDetected = true
+        if instance.Name == "3" then
+            local photoRewardType = instance:GetAttribute("PhotoRewardType")
+            return photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "ghostwriting"
         end
         
-        return writingEverDetected
+        for _, child in pairs(instance:GetDescendants()) do
+            if child.Name == "3" then
+                local photoRewardType = child:GetAttribute("PhotoRewardType")
+                return photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "ghostwriting"
+            end
+        end
+        
+        return false
     end
+
+    -- Step 1: Cek di ToolsHolder semua player
+    for _, player in pairs(Players:GetPlayers()) do
+        local toolsHolder = player:FindFirstChild("ToolsHolder")
+        if toolsHolder then
+            local bookInTools = toolsHolder:FindFirstChild("3")
+            if bookInTools and checkBookInInstance(bookInTools) then
+                writingEverDetected = true
+                return true
+            end
+        end
+    end
+    
+    -- Step 2: Cek di karakter semua player
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character and checkBookInInstance(player.Character) then
+            writingEverDetected = true
+            return true
+        end
+    end
+    
+    -- Step 3: Cek di workspace.Items["3"]
+    local items = workspace:FindFirstChild("Items")
+    if items then
+        local item3 = items:FindFirstChild("3")
+        if item3 and checkBookInInstance(item3) then
+            writingEverDetected = true
+            return true
+        end
+    end
+    
+    -- Step 4: Cek di seluruh workspace
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj.Name == "3" and (obj:IsA("Part") or obj:IsA("Model")) then
+            if checkBookInInstance(obj) then
+                writingEverDetected = true
+                return true
+            end
+        end
+    end
+    
     return writingEverDetected
 end
 
@@ -710,38 +796,34 @@ local function checkEMFReading()
         
         return 0, ""
     end
-    
-    -- Step 1: Dapatkan semua nama player
-    local playerNames = {}
+
+    -- Step 1: Cek EMF di ToolsHolder semua player
     for _, player in pairs(Players:GetPlayers()) do
-        table.insert(playerNames, player.Name)
-    end
-    
-    -- Step 2: Cari EMF di workspace berdasarkan nama player
-    for _, playerName in ipairs(playerNames) do
-        -- Cari player di workspace
-        local playerInWorkspace = workspace:FindFirstChild(playerName)
-        if playerInWorkspace then
-            -- Cek EMF di karakter player
-            local level, evidence = checkEMFInInstance(playerInWorkspace)
-            if level > 0 then
-                currentLevel = level
-                currentEvidence = evidence
-                break
-            end
-            
-            -- Cek juga di dalam folder-folder khusus di player
-            for _, child in pairs(playerInWorkspace:GetChildren()) do
-                if child:IsA("Folder") or child:IsA("Model") then
-                    local level, evidence = checkEMFInInstance(child)
-                    if level > 0 then
-                        currentLevel = level
-                        currentEvidence = evidence
-                        break
-                    end
+        local toolsHolder = player:FindFirstChild("ToolsHolder")
+        if toolsHolder then
+            local emfInTools = toolsHolder:FindFirstChild("6")
+            if emfInTools then
+                local level, evidence = checkEMFInInstance(emfInTools)
+                if level > 0 then
+                    currentLevel = level
+                    currentEvidence = evidence
+                    break
                 end
             end
-            if currentLevel > 0 then break end
+        end
+    end
+    
+    -- Step 2: Jika tidak ditemukan di ToolsHolder, cek di karakter player
+    if currentLevel == 0 then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player.Character then
+                local level, evidence = checkEMFInInstance(player.Character)
+                if level > 0 then
+                    currentLevel = level
+                    currentEvidence = evidence
+                    break
+                end
+            end
         end
     end
     
@@ -762,7 +844,6 @@ local function checkEMFReading()
     
     -- Step 4: Cek juga di lokasi lain yang mungkin
     if currentLevel == 0 then
-        -- Cek di seluruh workspace untuk item EMF
         for _, obj in pairs(workspace:GetDescendants()) do
             if obj.Name == "6" and (obj:IsA("Part") or obj:IsA("Model")) then
                 local level, evidence = checkEMFInInstance(obj)
@@ -775,7 +856,7 @@ local function checkEMFReading()
         end
     end
     
-    -- Step 5: Jika EMF5 pernah terdeteksi, selalu tampilkan evidence meskipun level sekarang bukan 5
+    -- Step 5: Jika EMF5 pernah terdeteksi, selalu tampilkan evidence
     if emf5EverDetected and currentEvidence == "" then
         currentEvidence = "EMF5"
     end
@@ -785,97 +866,13 @@ end
 
 -- === CHECK SPIRIT BOX ===
 local function checkSpiritBox()
-    -- Cek di workspace.Items["5"] terlebih dahulu
-    local items = workspace:FindFirstChild("Items")
-    if items then
-        local spiritBoxItem = items:FindFirstChild("5")
-        if spiritBoxItem then
-            -- Cari Handle di dalam spirit box item
-            local handle = spiritBoxItem:FindFirstChild("Handle")
-            if handle then
-                -- Cek semua sound objects di dalam Handle
-                for _, child in pairs(handle:GetChildren()) do
-                    if child:IsA("Sound") then
-                        -- Jika ada sound yang bukan bernama "Tone" dan sedang playing
-                        if child.Name ~= "Tone" then
-                            return true
-                        end
-                    elseif child:IsA("Part") or child:IsA("MeshPart") then
-                        -- Jika ada part/mesh yang bukan Handle, mungkin spirit box aktif
-                        if child.Name ~= "Handle" then
-                            -- Cek juga di dalam part tersebut untuk sound
-                            for _, subChild in pairs(child:GetChildren()) do
-                                if subChild:IsA("Sound") and subChild.Name ~= "Tone" then
-                                    return true
-                                end
-                            end
-                        end
-                    end
-                end
-            else
-                -- Jika tidak ada Handle, cek langsung di spiritBoxItem untuk sound
-                for _, child in pairs(spiritBoxItem:GetChildren()) do
-                    if child:IsA("Sound") and child.Name ~= "Tone" then
-                        return true
-                    end
-                end
-            end
-        end
-    end
-    
-    -- Jika tidak ada di Items, cek di setiap player
-    for _, player in pairs(Players:GetPlayers()) do
-        if player.Character then
-            local character = player.Character
-            
-            -- Cek di semua child karakter untuk item Spirit Box (5)
-            local spiritBoxItem = character:FindFirstChild("5")
-            if spiritBoxItem then
-                -- Cari Handle di dalam spirit box item
-                local handle = spiritBoxItem:FindFirstChild("Handle")
-                if handle then
-                    for _, child in pairs(handle:GetChildren()) do
-                        if child:IsA("Sound") and child.Name ~= "Tone" then
-                            return true
-                        end
-                    end
-                else
-                    -- Cek langsung di spiritBoxItem
-                    for _, child in pairs(spiritBoxItem:GetChildren()) do
-                        if child:IsA("Sound") and child.Name ~= "Tone" then
-                            return true
-                        end
-                    end
-                end
-            end
-            
-            -- Cek juga di dalam folder-folder tertentu di karakter
-            for _, child in pairs(character:GetDescendants()) do
-                if child.Name == "5" then
-                    local handle = child:FindFirstChild("Handle")
-                    if handle then
-                        for _, sound in pairs(handle:GetChildren()) do
-                            if sound:IsA("Sound") and sound.Name ~= "Tone" then
-                                return true
-                            end
-                        end
-                    else
-                        for _, sound in pairs(child:GetChildren()) do
-                            if sound:IsA("Sound") and sound.Name ~= "Tone" then
-                                return true
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    
-    -- Cek juga di LocalPlayer
-    if LocalPlayer.Character then
-        local spiritBoxItem = LocalPlayer.Character:FindFirstChild("5")
-        if spiritBoxItem then
-            local handle = spiritBoxItem:FindFirstChild("Handle")
+    -- Fungsi untuk cek spirit box dalam instance
+    local function checkSpiritBoxInInstance(instance)
+        if not instance then return false end
+        
+        -- Cek langsung di instance
+        if instance.Name == "5" then
+            local handle = instance:FindFirstChild("Handle")
             if handle then
                 for _, child in pairs(handle:GetChildren()) do
                     if child:IsA("Sound") and child.Name ~= "Tone" then
@@ -883,7 +880,7 @@ local function checkSpiritBox()
                     end
                 end
             else
-                for _, child in pairs(spiritBoxItem:GetChildren()) do
+                for _, child in pairs(instance:GetChildren()) do
                     if child:IsA("Sound") and child.Name ~= "Tone" then
                         return true
                     end
@@ -891,8 +888,8 @@ local function checkSpiritBox()
             end
         end
         
-        -- Cek di descendants LocalPlayer
-        for _, child in pairs(LocalPlayer.Character:GetDescendants()) do
+        -- Cek di descendants
+        for _, child in pairs(instance:GetDescendants()) do
             if child.Name == "5" then
                 local handle = child:FindFirstChild("Handle")
                 if handle then
@@ -908,6 +905,44 @@ local function checkSpiritBox()
                         end
                     end
                 end
+            end
+        end
+        
+        return false
+    end
+
+    -- Step 1: Cek di ToolsHolder semua player
+    for _, player in pairs(Players:GetPlayers()) do
+        local toolsHolder = player:FindFirstChild("ToolsHolder")
+        if toolsHolder then
+            local spiritBoxInTools = toolsHolder:FindFirstChild("5")
+            if spiritBoxInTools and checkSpiritBoxInInstance(spiritBoxInTools) then
+                return true
+            end
+        end
+    end
+    
+    -- Step 2: Cek di karakter semua player
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character and checkSpiritBoxInInstance(player.Character) then
+            return true
+        end
+    end
+    
+    -- Step 3: Cek di workspace.Items["5"]
+    local items = workspace:FindFirstChild("Items")
+    if items then
+        local spiritBoxItem = items:FindFirstChild("5")
+        if spiritBoxItem and checkSpiritBoxInInstance(spiritBoxItem) then
+            return true
+        end
+    end
+    
+    -- Step 4: Cek di seluruh workspace
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj.Name == "5" and (obj:IsA("Part") or obj:IsA("Model")) then
+            if checkSpiritBoxInInstance(obj) then
+                return true
             end
         end
     end
