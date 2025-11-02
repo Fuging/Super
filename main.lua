@@ -391,7 +391,7 @@ local function createThermometerClone()
     -- Clone thermometer
     clonedThermometer = originalThermo:Clone()
     clonedThermometer.Name = "ClonedThermometer"
-    clonedThermometer.Parent = workspace
+    clonedThermometer.Parent = workspace.Items
     
     -- Dapatkan posisi ghost
     local ghostPos
@@ -414,14 +414,6 @@ local function createThermometerClone()
         if part:IsA("BasePart") then
             part.Transparency = 1
             part.CanCollide = false
-            part.Anchored = true
-        end
-    end
-    
-    -- Nonaktifkan script yang tidak diperlukan
-    for _, script in ipairs(clonedThermometer:GetDescendants()) do
-        if script:IsA("Script") or script:IsA("LocalScript") then
-            script.Enabled = false
         end
     end
     
@@ -1899,14 +1891,11 @@ end)
 
 -- === INIT ===
 createESP()
-
--- Pastikan semua UI elements sudah dibuat sebelum updateAll
-task.wait(1) 
 updateAll()
 
--- Buat thermometer clone setelah game fully loaded
+-- Buat thermometer clone setelah game loaded
 spawn(function()
-    task.wait(3)
+    task.wait(5)
     ensureThermometerClone()
 end)
 
