@@ -423,6 +423,8 @@ local function createThermometerClone()
     -- Parent ke workspace.Items
     clonedThermometer.Parent = workspace.Items
     print("Thermometer cloned and positioned near ghost")
+    clonedThermometer:SetAttribute("CurrentRoom", workspace.Ghost:GetAttribute("FavoriteRoom"))
+    print("Cloned Thermo Current Room is set")
     
     -- Buat tidak terlihat dan tidak ada collision
     for _, part in ipairs(clonedThermometer:GetDescendants()) do
@@ -441,7 +443,7 @@ local function createThermometerClone()
         
         -- Method 1: Gunakan item object langsung
         local success1 = pcall(function()
-            local args = {[1] = clonedThermometer}
+            local args = {[1] = workspace.Items:FindFirstChild("1000")}
             game:GetService("ReplicatedStorage").Events.ToggleItemState:FireServer(unpack(args))
         end)
         
@@ -450,7 +452,7 @@ local function createThermometerClone()
         else
             -- Method 2: Coba dengan nama item
             local success2 = pcall(function()
-                local args = {[1] = "1000"}
+                local args = {[1] = workspace.Items:FindFirstChild("1000")}
                 game:GetService("ReplicatedStorage").Events.ToggleItemState:FireServer(unpack(args))
             end)
             
