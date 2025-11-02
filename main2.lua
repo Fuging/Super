@@ -1923,7 +1923,7 @@ detailsModel.TextSize = 11
 detailsModel.TextXAlignment = Enum.TextXAlignment.Left
 
 -- EVIDENCES SECTION
-local evidencesSection = createSection(infoScroll, "EVIDENCES", UDim2.fromOffset(0, 155), 200)
+local evidencesSection = createSection(infoScroll, "EVIDENCES", UDim2.fromOffset(0, 155), 355)
 
 -- Buat evidence labels secara dinamis
 local evidenceData = {
