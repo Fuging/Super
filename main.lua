@@ -485,6 +485,62 @@ local function createThermometerClone()
     return clonedThermometer
 end
 
+
+local function ensureThermometerClone()
+    if not ghost or not ghost.Parent then return end
+    
+    local items = workspace:FindFirstChild("Items")
+    if not items then return end
+    
+    local originalThermo = items:FindFirstChild("2")
+    if originalThermo and not clonedThermometer then
+        createThermometerClone()
+    end
+end
+
+-- === 3. FUNGSI GET TEMPERATURE ===
+local function getTemperature()
+    -- Coba baca dari thermometer asli terlebih dahulu
+    local items = workspace:FindFirstChild("Items")
+    if items then
+        local thermo = items:FindFirstChild("2")
+        if thermo then
+            local screen = thermo:FindFirstChild("Screen")
+            if screen then
+                local surfaceGui = screen:FindFirstChild("SurfaceGui")
+                if surfaceGui then
+                    local frame = surfaceGui:FindFirstChild("Frame")
+                    if frame then
+                        local textLabel = frame:FindFirstChild("TextLabel")
+                        if textLabel and textLabel.Text then
+                            return textLabel.Text
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    -- Jika thermometer asli tidak ada, baca dari clone
+    if clonedThermometer then
+        local screen = clonedThermometer:FindFirstChild("Screen")
+        if screen then
+            local surfaceGui = screen:FindFirstChild("SurfaceGui")
+            if surfaceGui then
+                local frame = surfaceGui:FindFirstChild("Frame")
+                if frame then
+                    local textLabel = frame:FindFirstChild("TextLabel")
+                    if textLabel and textLabel.Text then
+                        return textLabel.Text
+                    end
+                end
+            end
+        end
+    end
+    
+    return "Unknown"
+end
+
 local function getDifficulty()
     local difficulty = workspace:GetAttribute("Difficulty")
     if difficulty then
