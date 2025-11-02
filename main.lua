@@ -2025,15 +2025,8 @@ closeBtn.MouseButton1Click:Connect(function()
 end)
 
 -- === INIT ===
-createThermometerClone()
 createESP()
 updateAll()
-
--- Buat thermometer clone setelah game loaded
-spawn(function()
-    task.wait(5)
-    ensureThermometerClone()
-end)
 
 if ghost then
     ghost:GetAttributeChangedSignal("Age"):Connect(updateAll)
