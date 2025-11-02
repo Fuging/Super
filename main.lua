@@ -410,7 +410,7 @@ local function createThermometerClone()
         
         -- Coba nyalakan dengan ToggleItemState
         local success = pcall(function()
-            local args = {[1] = "1000"}
+            local args = {[1] = workspace.Items:FindFirstChild("1000")}
             game:GetService("ReplicatedStorage").Events.ToggleItemState:FireServer(unpack(args))
         end)
         
