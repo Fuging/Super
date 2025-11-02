@@ -304,59 +304,90 @@ local function checkGhostOrb()
 end
 
 -- === CHECK NEW EVIDENCES ===
--- === PERBAIKAN CHECK WITHERED ===
+-- === VARIABEL UNTUK MENYIMPAN STATUS PERMANEN ===
+local witheredEverDetected = false
+local writingEverDetected = false
+local emf5EverDetected = false
+
 local function checkWithered()
     local items = workspace:FindFirstChild("Items")
-    if not items then return false end
+    if not items then return witheredEverDetected end
     
     local item9 = items:FindFirstChild("9")
     if item9 then
         local photoRewardType = item9:GetAttribute("PhotoRewardType")
         -- Cek jika PhotoRewardType ada dan berisi nilai tertentu
-        return photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "withered"
+        local currentDetection = photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "withered"
+        
+        -- Update status permanen
+        if currentDetection then
+            witheredEverDetected = true
+        end
+        
+        return witheredEverDetected
     end
-    return false
+    return witheredEverDetected
 end
 
--- === PERBAIKAN CHECK WRITING ===
 local function checkWriting()
     local items = workspace:FindFirstChild("Items")
-    if not items then return false end
+    if not items then return writingEverDetected end
     
     local item3 = items:FindFirstChild("3")
     if item3 then
         local photoRewardType = item3:GetAttribute("PhotoRewardType")
         -- Cek jika PhotoRewardType ada dan berisi nilai tertentu
-        return photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "ghostwriting"
+        local currentDetection = photoRewardType ~= nil and photoRewardType ~= "" and string.lower(tostring(photoRewardType)) == "ghostwriting"
+        
+        -- Update status permanen
+        if currentDetection then
+            writingEverDetected = true
+        end
+        
+        return writingEverDetected
     end
-    return false
+    return writingEverDetected
 end
 
 -- === ALTERNATIVE CHECK WRITING & WITHERED (JIKA ADA NILAI STRING APAPUN) ===
-local function checkWriting()
+local function checkWritingAlternative()
     local items = workspace:FindFirstChild("Items")
-    if not items then return false end
+    if not items then return writingEverDetected end
     
     local item3 = items:FindFirstChild("3")
     if item3 then
         local photoRewardType = item3:GetAttribute("PhotoRewardType")
         -- Cek jika PhotoRewardType ada dan berisi nilai apapun
-        return photoRewardType ~= nil and photoRewardType ~= ""
+        local currentDetection = photoRewardType ~= nil and photoRewardType ~= ""
+        
+        -- Update status permanen
+        if currentDetection then
+            writingEverDetected = true
+        end
+        
+        return writingEverDetected
     end
-    return false
+    return writingEverDetected
 end
 
-local function checkWithered()
+local function checkWitheredAlternative()
     local items = workspace:FindFirstChild("Items")
-    if not items then return false end
+    if not items then return witheredEverDetected end
     
     local item9 = items:FindFirstChild("9")
     if item9 then
         local photoRewardType = item9:GetAttribute("PhotoRewardType")
         -- Cek jika PhotoRewardType ada dan berisi nilai apapun
-        return photoRewardType ~= nil and photoRewardType ~= ""
+        local currentDetection = photoRewardType ~= nil and photoRewardType ~= ""
+        
+        -- Update status permanen
+        if currentDetection then
+            witheredEverDetected = true
+        end
+        
+        return witheredEverDetected
     end
-    return false
+    return witheredEverDetected
 end
 
 local function getTemperature()
@@ -366,9 +397,9 @@ local function getTemperature()
     local currentRoom = ghost:GetAttribute("CurrentRoom")
     
     -- Tentukan ruangan yang akan digunakan (prioritaskan favorite room)
-    local targetRoomName = favoriteRoom
+    local targetRoomName = currentRoom
     if not targetRoomName or targetRoomName == "" or targetRoomName == "Unknown" then
-        targetRoomName = currentRoom
+        targetRoomName = favoriteRoom
     end
     
     if not targetRoomName or targetRoomName == "" or targetRoomName == "Unknown" then
@@ -455,87 +486,125 @@ local detailsEMF = nil
 local detailsSpiritBox = nil
 
 local function checkEMFReading()
-    -- Cek di workspace.Items["6"] terlebih dahulu
-    local items = workspace:FindFirstChild("Items")
-    if items then
-        local emfItem = items:FindFirstChild("6")
-        if emfItem then
-            local readingLevel = emfItem:GetAttribute("ReadingLevel")
-            if readingLevel then
-                local level = tonumber(readingLevel) or 1
-                -- Jika level 5, tambahkan evidence text
-                if level == 5 then
-                    return level, "EMF5"
-                end
-                return level, ""
-            end
-        end
-    end
+    local currentLevel = 0
+    local currentEvidence = ""
     
-    -- Jika tidak ada di Items, cek di setiap player
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local character = player.Character
-            
-            -- Cek di semua child karakter untuk item EMF (6)
-            local emfItem = character:FindFirstChild("6")
-            if emfItem then
-                local readingLevel = emfItem:GetAttribute("ReadingLevel")
-                if readingLevel then
-                    local level = tonumber(readingLevel) or 1
-                    if level == 5 then
-                        return level, "EMF5"
-                    end
-                    return level, ""
-                end
-            end
-            
-            -- Cek juga di dalam folder-folder tertentu di karakter
-            for _, child in pairs(character:GetDescendants()) do
-                if child.Name == "6" then
-                    local readingLevel = child:GetAttribute("ReadingLevel")
-                    if readingLevel then
-                        local level = tonumber(readingLevel) or 1
-                        if level == 5 then
-                            return level, "EMF5"
-                        end
-                        return level, ""
-                    end
-                end
-            end
-        end
-    end
-    
-    -- Cek juga di LocalPlayer
-    if LocalPlayer.Character then
-        local emfItem = LocalPlayer.Character:FindFirstChild("6")
-        if emfItem then
-            local readingLevel = emfItem:GetAttribute("ReadingLevel")
+    -- Fungsi untuk cek EMF dalam sebuah instance (item atau player)
+    local function checkEMFInInstance(instance)
+        if not instance then return 0, "" end
+        
+        -- Cek langsung di instance
+        if instance.Name == "6" then
+            local readingLevel = instance:GetAttribute("ReadingLevel")
             if readingLevel then
                 local level = tonumber(readingLevel) or 1
                 if level == 5 then
+                    emf5EverDetected = true
                     return level, "EMF5"
                 end
                 return level, ""
             end
         end
         
-        -- Cek di descendants LocalPlayer
-        for _, child in pairs(LocalPlayer.Character:GetDescendants()) do
+        -- Cek di descendants instance
+        for _, child in pairs(instance:GetDescendants()) do
             if child.Name == "6" then
                 local readingLevel = child:GetAttribute("ReadingLevel")
                 if readingLevel then
                     local level = tonumber(readingLevel) or 1
                     if level == 5 then
+                        emf5EverDetected = true
                         return level, "EMF5"
                     end
                     return level, ""
                 end
             end
         end
+        
+        return 0, ""
     end
     
-    return 0, ""
+    -- Step 1: Dapatkan semua nama player
+    local playerNames = {}
+    for _, player in pairs(Players:GetPlayers()) do
+        table.insert(playerNames, player.Name)
+    end
+    
+    print("Players found: " .. table.concat(playerNames, ", "))
+    
+    -- Step 2: Cari EMF di workspace berdasarkan nama player
+    for _, playerName in ipairs(playerNames) do
+        -- Cari player di workspace
+        local playerInWorkspace = workspace:FindFirstChild(playerName)
+        if playerInWorkspace then
+            print("Checking EMF for player: " .. playerName)
+            
+            -- Cek EMF di karakter player
+            local level, evidence = checkEMFInInstance(playerInWorkspace)
+            if level > 0 then
+                currentLevel = level
+                currentEvidence = evidence
+                print("EMF found with player " .. playerName .. ": Level " .. level)
+                break
+            end
+            
+            -- Cek juga di dalam folder-folder khusus di player
+            for _, child in pairs(playerInWorkspace:GetChildren()) do
+                if child:IsA("Folder") or child:IsA("Model") then
+                    local level, evidence = checkEMFInInstance(child)
+                    if level > 0 then
+                        currentLevel = level
+                        currentEvidence = evidence
+                        print("EMF found in folder of player " .. playerName .. ": Level " .. level)
+                        break
+                    end
+                end
+            end
+            if currentLevel > 0 then break end
+        else
+            print("Player not found in workspace: " .. playerName)
+        end
+    end
+    
+    -- Step 3: Jika tidak ditemukan di player, cek di workspace.Items["6"]
+    if currentLevel == 0 then
+        local items = workspace:FindFirstChild("Items")
+        if items then
+            local emfItem = items:FindFirstChild("6")
+            if emfItem then
+                print("Checking EMF in workspace.Items")
+                local level, evidence = checkEMFInInstance(emfItem)
+                if level > 0 then
+                    currentLevel = level
+                    currentEvidence = evidence
+                end
+            end
+        end
+    end
+    
+    -- Step 4: Cek juga di lokasi lain yang mungkin
+    if currentLevel == 0 then
+        -- Cek di seluruh workspace untuk item EMF
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj.Name == "6" and (obj:IsA("Part") or obj:IsA("Model")) then
+                local level, evidence = checkEMFInInstance(obj)
+                if level > 0 then
+                    currentLevel = level
+                    currentEvidence = evidence
+                    print("EMF found in workspace: Level " .. level)
+                    break
+                end
+            end
+        end
+    end
+    
+    -- Step 5: Jika EMF5 pernah terdeteksi, selalu tampilkan evidence meskipun level sekarang bukan 5
+    if emf5EverDetected and currentEvidence == "" then
+        currentEvidence = "EMF5"
+    end
+    
+    print("Final EMF Reading: Level " .. currentLevel .. ", Evidence: " .. currentEvidence)
+    return currentLevel, currentEvidence
 end
 
 -- === CHECK SPIRIT BOX ===
@@ -725,7 +794,7 @@ local function updateAll()
     if detailsTemperature then detailsTemperature.Text = "🌡️ Temperature: " .. tostring(temperature) end
     if detailsEnergy then detailsEnergy.Text = "⚡ Energy: " .. tostring(energy) end
     
-    -- Update EMF Reading dengan evidence text
+    -- Dalam fungsi updateAll(), untuk EMF bagian:
     if detailsEMF then 
         local displayText = "📡 EMF Reading: " .. tostring(emfReading)
         if emfEvidence ~= "" then
@@ -735,8 +804,8 @@ local function updateAll()
         
         -- Update warna berdasarkan nilai EMF
         local emfLevel = emfReading
-        if emfLevel >= 5 then
-            detailsEMF.TextColor3 = Color3.fromRGB(255, 50, 50) -- Merah untuk EMF 5
+        if emf5EverDetected then
+            detailsEMF.TextColor3 = Color3.fromRGB(255, 50, 50) -- Selalu merah jika EMF5 pernah terdeteksi
         elseif emfLevel >= 3 then
             detailsEMF.TextColor3 = Color3.fromRGB(255, 150, 50) -- Orange untuk EMF 3-4
         else
