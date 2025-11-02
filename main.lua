@@ -363,9 +363,15 @@ local function getTemperature()
     if not ghost or not ghost.Parent then return "Unknown" end
     
     local favoriteRoom = ghost:GetAttribute("FavoriteRoom")
-    if not favoriteRoom or favoriteRoom == "" or favoriteRoom == "Unknown" then
     local currentRoom = ghost:GetAttribute("CurrentRoom")
-    if not currentRoom or currentRoom == "" or currentRoom == "Unknown" then
+    
+    -- Tentukan ruangan yang akan digunakan (prioritaskan favorite room)
+    local targetRoomName = favoriteRoom
+    if not targetRoomName or targetRoomName == "" or targetRoomName == "Unknown" then
+        targetRoomName = currentRoom
+    end
+    
+    if not targetRoomName or targetRoomName == "" or targetRoomName == "Unknown" then
         return "Unknown"
     end
     
@@ -375,15 +381,15 @@ local function getTemperature()
     local rooms = mapRooms:FindFirstChild("Rooms")
     if not rooms then return "Unknown" end
     
-    local targetRoom = rooms:FindFirstChild(favoriteRoom)
+    local targetRoom = rooms:FindFirstChild(targetRoomName)
     if not targetRoom then 
-        warn("Room not found: " .. favoriteRoom)
+        print("Room not found: " .. targetRoomName)
         return "Unknown" 
     end
     
     local temperature = targetRoom:GetAttribute("Temperature")
     if temperature then
-        print("Temperature from room '" .. favoriteRoom .. "': " .. tostring(temperature))
+        print("Temperature from room '" .. targetRoomName .. "': " .. tostring(temperature))
         return tostring(temperature) .. "°C"
     end
     
