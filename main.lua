@@ -359,217 +359,32 @@ local function checkWithered()
     return false
 end
 
--- === VARIABEL CLONED THERMOMETER ===
-local clonedThermometer = nil
-
--- === 2. FUNGSI CREATE THERMOMETER CLONE ===
-local function createThermometerClone()
-    if clonedThermometer then
-        clonedThermometer:Destroy()
-        clonedThermometer = nil
-    end
-    
-    local items = workspace:FindFirstChild("Items")
-    if not items then 
-        warn("Items folder not found for thermometer clone")
-        return 
-    end
-    
-    local originalThermo = items:FindFirstChild("2")
-    if not originalThermo then 
-        warn("Original thermometer (Item 2) not found")
-        return 
-    end
-    
-    print("Creating thermometer clone...")
-    
-    -- Clone thermometer
-    clonedThermometer = originalThermo:Clone()
-    clonedThermometer.Name = "1000"
-    
-    -- Dapatkan posisi ghost
-    local ghostPos
-    if ghost:IsA("Model") and ghost.PrimaryPart then
-        ghostPos = ghost.PrimaryPart.Position
-    elseif ghost:IsA("BasePart") then
-        ghostPos = ghost.Position
-    else
-        warn("Cannot get ghost position")
-        return
-    end
-    
-    -- Posisikan di dekat ghost
-    local offset = Vector3.new(0, 2, 3)
-    if clonedThermometer:IsA("Model") then
-        if clonedThermometer.PrimaryPart then
-            clonedThermometer:SetPrimaryPartCFrame(CFrame.new(ghostPos + offset))
-        else
-            local firstPart = clonedThermometer:FindFirstChildWhichIsA("BasePart")
-            if firstPart then
-                local currentCFrame = firstPart.CFrame
-                for _, part in ipairs(clonedThermometer:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        local relativePos = currentCFrame:ToObjectSpace(part.CFrame)
-                        part.CFrame = CFrame.new(ghostPos + offset) * relativePos
-                    end
-                end
-            end
-        end
-    elseif clonedThermometer:IsA("BasePart") then
-        clonedThermometer.CFrame = CFrame.new(ghostPos + offset)
-    end
-    
-    clonedThermometer.Parent = workspace.Items
-    print("Thermometer cloned and positioned near ghost")
-    
-    -- Buat tidak terlihat dan tidak ada collision
-    for _, part in ipairs(clonedThermometer:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.Transparency = 1
-            part.CanCollide = false
-            part.Anchored = true
-        end
-    end
-    
-    -- Nyalakan thermometer dengan cara pickup -> equip -> toggle -> drop
-    spawn(function()
-        task.wait(1)
-        
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        print("Attempting to turn on cloned thermometer using pickup-equip method...")
-        
-        -- Step 1: Pickup thermometer clone
-        local pickupSuccess = pcall(function()
-            local args = {[1] = clonedThermometer}
-            ReplicatedStorage.Events.RequestItemPickup:FireServer(unpack(args))
-            print("Step 1: Picked up cloned thermometer")
-        end)
-        
-        if not pickupSuccess then
-            warn("Failed to pickup cloned thermometer")
-        end
-        
-        task.wait(0.3)
-        
-        -- Step 2: Equip thermometer dari inventory slot 1
-        local equipSuccess = pcall(function()
-            local args = {[1] = "InvSlot1"}
-            ReplicatedStorage.Events.RequestItemEquip:FireServer(unpack(args))
-            print("Step 2: Equipped thermometer from InvSlot1")
-        end)
-        
-        if not equipSuccess then
-            warn("Failed to equip cloned thermometer")
-        end
-        
-        task.wait(0.3)
-        
-        -- Step 3: Toggle thermometer ON (cek di character player)
-        local character = LocalPlayer.Character
-        if character then
-            local thermoInHand = character:FindFirstChild("1000")
-            if thermoInHand then
-                print("Step 3: Thermometer found in character, toggling...")
-                
-                local toggleSuccess = pcall(function()
-                    local args = {[1] = thermoInHand}
-                    ReplicatedStorage.Events.ToggleItemState:FireServer(unpack(args))
-                    print("✅ Thermometer toggled ON successfully!")
-                end)
-                
-                if not toggleSuccess then
-                    warn("Failed to toggle thermometer")
-                end
-            else
-                warn("Thermometer not found in character after equip")
-            end
-        else
-            warn("Character not found")
-        end
-        
-        task.wait(0.3)
-        
-        -- Step 4: Drop thermometer kembali
-        local dropSuccess = pcall(function()
-            local args = {[1] = "InvSlot1"}
-            ReplicatedStorage.Events.RequestItemDrop:FireServer(unpack(args))
-            print("Step 4: Dropped thermometer back to world")
-        end)
-        
-        if not dropSuccess then
-            warn("Failed to drop thermometer")
-        end
-        
-        task.wait(1)
-        
-        -- Verify thermometer is ON
-        local screen = clonedThermometer:FindFirstChild("Screen")
-        if screen then
-            print("✅ Screen found on cloned thermometer")
-            
-            -- Cek apakah ada reading
-            task.wait(2)
-            local temp = getTemperature()
-            print("Temperature reading: " .. temp)
-        else
-            warn("❌ Screen not found on cloned thermometer")
-        end
-    end)
-    
-    return clonedThermometer
-end
-
-
-local function ensureThermometerClone()
-    if not ghost or not ghost.Parent then return end
-    
-    local items = workspace:FindFirstChild("Items")
-    if not items then return end
-    
-    local originalThermo = items:FindFirstChild("2")
-    if originalThermo and not clonedThermometer then
-        createThermometerClone()
-    end
-end
-
--- === 3. FUNGSI GET TEMPERATURE ===
 local function getTemperature()
-    -- Coba baca dari thermometer asli terlebih dahulu
-    local items = workspace:FindFirstChild("Items")
-    if items then
-        local thermo = items:FindFirstChild("2")
-        if thermo then
-            local screen = thermo:FindFirstChild("Screen")
-            if screen then
-                local surfaceGui = screen:FindFirstChild("SurfaceGui")
-                if surfaceGui then
-                    local frame = surfaceGui:FindFirstChild("Frame")
-                    if frame then
-                        local textLabel = frame:FindFirstChild("TextLabel")
-                        if textLabel and textLabel.Text then
-                            return textLabel.Text
-                        end
-                    end
-                end
-            end
-        end
+    if not ghost or not ghost.Parent then return "Unknown" end
+    
+    local favoriteRoom = ghost:GetAttribute("FavoriteRoom")
+    if not favoriteRoom or favoriteRoom == "" or favoriteRoom == "Unknown" then
+    local currentRoom = ghost:GetAttribute("CurrentRoom")
+    if not currentRoom or currentRoom == "" or currentRoom == "Unknown" then
+        return "Unknown"
     end
     
-    -- Jika thermometer asli tidak ada, baca dari clone
-    if clonedThermometer then
-        local screen = clonedThermometer:FindFirstChild("Screen")
-        if screen then
-            local surfaceGui = screen:FindFirstChild("SurfaceGui")
-            if surfaceGui then
-                local frame = surfaceGui:FindFirstChild("Frame")
-                if frame then
-                    local textLabel = frame:FindFirstChild("TextLabel")
-                    if textLabel and textLabel.Text then
-                        return textLabel.Text
-                    end
-                end
-            end
-        end
+    local mapRooms = workspace:FindFirstChild("Map")
+    if not mapRooms then return "Unknown" end
+    
+    local rooms = mapRooms:FindFirstChild("Rooms")
+    if not rooms then return "Unknown" end
+    
+    local targetRoom = rooms:FindFirstChild(favoriteRoom)
+    if not targetRoom then 
+        warn("Room not found: " .. favoriteRoom)
+        return "Unknown" 
+    end
+    
+    local temperature = targetRoom:GetAttribute("Temperature")
+    if temperature then
+        print("Temperature from room '" .. favoriteRoom .. "': " .. tostring(temperature))
+        return tostring(temperature) .. "°C"
     end
     
     return "Unknown"
@@ -628,11 +443,210 @@ local function getEnergy()
     return success and result or "Unknown"
 end
 
+-- === VARIABEL EVIDENCE BARU ===
+local detailsEMF = nil
+local detailsSpiritBox = nil
+
+-- === CHECK EMF READING ===
+local function checkEMFReading()
+    -- Cek di workspace.Items["6"] terlebih dahulu
+    local items = workspace:FindFirstChild("Items")
+    if items then
+        local emfItem = items:FindFirstChild("6")
+        if emfItem then
+            local readingLevel = emfItem:GetAttribute("ReadingLevel")
+            if readingLevel then
+                return tonumber(readingLevel) or 1
+            end
+        end
+    end
+    
+    -- Jika tidak ada di Items, cek di setiap player
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local character = player.Character
+            
+            -- Cek di semua child karakter untuk item EMF (6)
+            local emfItem = character:FindFirstChild("6")
+            if emfItem then
+                local readingLevel = emfItem:GetAttribute("ReadingLevel")
+                if readingLevel then
+                    return tonumber(readingLevel) or 1
+                end
+            end
+            
+            -- Cek juga di dalam folder-folder tertentu di karakter
+            for _, child in pairs(character:GetDescendants()) do
+                if child.Name == "6" then
+                    local readingLevel = child:GetAttribute("ReadingLevel")
+                    if readingLevel then
+                        return tonumber(readingLevel) or 1
+                    end
+                end
+            end
+        end
+    end
+    
+    -- Cek juga di LocalPlayer
+    if LocalPlayer.Character then
+        local emfItem = LocalPlayer.Character:FindFirstChild("6")
+        if emfItem then
+            local readingLevel = emfItem:GetAttribute("ReadingLevel")
+            if readingLevel then
+                return tonumber(readingLevel) or 1
+            end
+        end
+        
+        -- Cek di descendants LocalPlayer
+        for _, child in pairs(LocalPlayer.Character:GetDescendants()) do
+            if child.Name == "6" then
+                local readingLevel = child:GetAttribute("ReadingLevel")
+                if readingLevel then
+                    return tonumber(readingLevel) or 1
+                end
+            end
+        end
+    end
+    
+    return 0
+end
+
+-- === CHECK SPIRIT BOX ===
+local function checkSpiritBox()
+    -- Cek di workspace.Items["5"] terlebih dahulu
+    local items = workspace:FindFirstChild("Items")
+    if items then
+        local spiritBoxItem = items:FindFirstChild("5")
+        if spiritBoxItem then
+            -- Cari Handle di dalam spirit box item
+            local handle = spiritBoxItem:FindFirstChild("Handle")
+            if handle then
+                -- Cek semua sound objects di dalam Handle
+                for _, child in pairs(handle:GetChildren()) do
+                    if child:IsA("Sound") then
+                        -- Jika ada sound yang bukan bernama "Tone" dan sedang playing
+                        if child.Name ~= "Tone" then
+                            return true
+                        end
+                    elseif child:IsA("Part") or child:IsA("MeshPart") then
+                        -- Jika ada part/mesh yang bukan Handle, mungkin spirit box aktif
+                        if child.Name ~= "Handle" then
+                            -- Cek juga di dalam part tersebut untuk sound
+                            for _, subChild in pairs(child:GetChildren()) do
+                                if subChild:IsA("Sound") and subChild.Name ~= "Tone" then
+                                    return true
+                                end
+                            end
+                        end
+                    end
+                end
+            else
+                -- Jika tidak ada Handle, cek langsung di spiritBoxItem untuk sound
+                for _, child in pairs(spiritBoxItem:GetChildren()) do
+                    if child:IsA("Sound") and child.Name ~= "Tone" then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    
+    -- Jika tidak ada di Items, cek di setiap player
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character then
+            local character = player.Character
+            
+            -- Cek di semua child karakter untuk item Spirit Box (5)
+            local spiritBoxItem = character:FindFirstChild("5")
+            if spiritBoxItem then
+                -- Cari Handle di dalam spirit box item
+                local handle = spiritBoxItem:FindFirstChild("Handle")
+                if handle then
+                    for _, child in pairs(handle:GetChildren()) do
+                        if child:IsA("Sound") and child.Name ~= "Tone" then
+                            return true
+                        end
+                    end
+                else
+                    -- Cek langsung di spiritBoxItem
+                    for _, child in pairs(spiritBoxItem:GetChildren()) do
+                        if child:IsA("Sound") and child.Name ~= "Tone" then
+                            return true
+                        end
+                    end
+                end
+            end
+            
+            -- Cek juga di dalam folder-folder tertentu di karakter
+            for _, child in pairs(character:GetDescendants()) do
+                if child.Name == "5" then
+                    local handle = child:FindFirstChild("Handle")
+                    if handle then
+                        for _, sound in pairs(handle:GetChildren()) do
+                            if sound:IsA("Sound") and sound.Name ~= "Tone" then
+                                return true
+                            end
+                        end
+                    else
+                        for _, sound in pairs(child:GetChildren()) do
+                            if sound:IsA("Sound") and sound.Name ~= "Tone" then
+                                return true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    -- Cek juga di LocalPlayer
+    if LocalPlayer.Character then
+        local spiritBoxItem = LocalPlayer.Character:FindFirstChild("5")
+        if spiritBoxItem then
+            local handle = spiritBoxItem:FindFirstChild("Handle")
+            if handle then
+                for _, child in pairs(handle:GetChildren()) do
+                    if child:IsA("Sound") and child.Name ~= "Tone" then
+                        return true
+                    end
+                end
+            else
+                for _, child in pairs(spiritBoxItem:GetChildren()) do
+                    if child:IsA("Sound") and child.Name ~= "Tone" then
+                        return true
+                    end
+                end
+            end
+        end
+        
+        -- Cek di descendants LocalPlayer
+        for _, child in pairs(LocalPlayer.Character:GetDescendants()) do
+            if child.Name == "5" then
+                local handle = child:FindFirstChild("Handle")
+                if handle then
+                    for _, sound in pairs(handle:GetChildren()) do
+                        if sound:IsA("Sound") and sound.Name ~= "Tone" then
+                            return true
+                        end
+                    end
+                else
+                    for _, sound in pairs(child:GetChildren()) do
+                        if sound:IsA("Sound") and sound.Name ~= "Tone" then
+                            return true
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    return false
+end
+
 -- === VARIABEL LASER VISIBLE ===
 local laserVisibleEver = false
 
 -- === UPDATE TEXT & DETAILS (DENGAN SEMUA EVIDENCE) ===
--- === PERBAIKAN UPDATE ALL ===
 local function updateAll()
     if not ghost or not ghost.Parent then return end
     
@@ -659,6 +673,8 @@ local function updateAll()
     local temperature = getTemperature()
     local energy = getEnergy()
     local difficulty = getDifficulty()
+    local emfReading = checkEMFReading()
+    local spiritBox = checkSpiritBox()
     
     if label then
         label.Text = "Ghost | Age: " .. age
@@ -680,9 +696,32 @@ local function updateAll()
     if detailsWriting then detailsWriting.Text = "📝 Writing: " .. tostring(writing) end
     if detailsTemperature then detailsTemperature.Text = "🌡️ Temperature: " .. tostring(temperature) end
     if detailsEnergy then detailsEnergy.Text = "⚡ Energy: " .. tostring(energy) end
+    if detailsEMF then detailsEMF.Text = "📡 EMF Reading: " .. tostring(emfReading) end
+    if detailsSpiritBox then detailsSpiritBox.Text = "📻 Spirit Box: " .. tostring(spiritBox) end
     if detailsMultiple then detailsMultiple.Text = "💀 Multiple Cursed: " .. tostring(multipleCursed) end
     if detailsFortune then detailsFortune.Text = "🔮 Fortune Teller: " .. tostring(fortuneTeller) end
     if detailsDifficulty then detailsDifficulty.Text = "🎯 Difficulty: " .. tostring(difficulty) end
+    
+    -- Update warna berdasarkan nilai EMF
+    if detailsEMF then
+        local emfLevel = emfReading
+        if emfLevel >= 5 then
+            detailsEMF.TextColor3 = Color3.fromRGB(255, 50, 50) -- Merah untuk EMF 5
+        elseif emfLevel >= 3 then
+            detailsEMF.TextColor3 = Color3.fromRGB(255, 150, 50) -- Orange untuk EMF 3-4
+        else
+            detailsEMF.TextColor3 = Color3.fromRGB(100, 255, 100) -- Hijau untuk EMF 1-2
+        end
+    end
+    
+    -- Update warna Spirit Box
+    if detailsSpiritBox then
+        if spiritBox then
+            detailsSpiritBox.TextColor3 = Color3.fromRGB(100, 255, 100) -- Hijau jika aktif
+        else
+            detailsSpiritBox.TextColor3 = Color3.fromRGB(255, 100, 100) -- Merah jika tidak aktif
+        end
+    end
     
     if vexLabel then
         vexLabel.Visible = invisibleLidar
@@ -1796,6 +1835,8 @@ local evidenceLabels = {
     {name = "Writing", icon = "📝", color = Color3.fromRGB(200, 200, 100), bold = false},
     {name = "Temperature", icon = "🌡️", color = Color3.fromRGB(100, 200, 255), bold = true},
     {name = "Energy", icon = "⚡", color = Color3.fromRGB(255, 255, 100), bold = true},
+    {name = "EMF", icon = "📡", color = Color3.fromRGB(100, 255, 100), bold = true}, -- EMF Reading
+    {name = "SpiritBox", icon = "📻", color = Color3.fromRGB(200, 100, 255), bold = true}, -- Spirit Box
     {name = "Multiple Cursed Possession", icon = "💀", color = Color3.fromRGB(255, 100, 100), bold = true},
     {name = "Fortune Teller", icon = "🔮", color = Color3.fromRGB(200, 150, 255), bold = false},
     {name = "Difficulty", icon = "🎯", color = Color3.fromRGB(255, 100, 100), bold = true}
@@ -1821,6 +1862,8 @@ for i, evidence in ipairs(evidenceLabels) do
     elseif evidence.name == "Writing" then detailsWriting = detail
     elseif evidence.name == "Temperature" then detailsTemperature = detail
     elseif evidence.name == "Energy" then detailsEnergy = detail
+    elseif evidence.name == "EMF" then detailsEMF = detail
+    elseif evidence.name == "SpiritBox" then detailsSpiritBox = detail
     elseif evidence.name == "Multiple Cursed Possession" then detailsMultiple = detail
     elseif evidence.name == "Fortune Teller" then detailsFortune = detail
     elseif evidence.name == "Difficulty" then detailsDifficulty = detail end
@@ -1829,7 +1872,7 @@ end
 -- Vex Label (di bawah semua evidence)
 vexLabel = Instance.new("TextLabel", rightColumn)
 vexLabel.Size = UDim2.new(1, 0, 0, 30)
-vexLabel.Position = UDim2.fromOffset(0, 215 + (11 * 25)) -- Setelah 10 evidence
+vexLabel.Position = UDim2.fromOffset(0, 215 + (13 * 25)) -- Sesuaikan karena sekarang ada 12 evidence
 vexLabel.BackgroundColor3 = Color3.fromRGB(50, 20, 20)
 vexLabel.Text = "⚠️ Ghost: Vex"
 vexLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
