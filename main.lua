@@ -388,9 +388,10 @@ local function getTemperature()
     end
     
     local temperature = targetRoom:GetAttribute("Temperature")
+    local RoundedTemp = math.floor(temperature * 100) / 100
     if temperature then
         print("Temperature from room '" .. targetRoomName .. "': " .. tostring(temperature))
-        return tostring(temperature) .. "°C"
+        return tostring(RoundedTemp) .. "°C"
     end
     
     return "Unknown"
