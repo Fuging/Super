@@ -399,7 +399,7 @@ local function createThermometerClone()
     -- Buat tidak terlihat dan tidak ada collision
     for _, part in ipairs(clonedThermometer:GetDescendants()) do
         if part:IsA("BasePart") then
-            part.Transparency = 1
+            part.Transparency = 0
             part.CanCollide = false
         end
     end
