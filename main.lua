@@ -391,12 +391,9 @@ local function createThermometerClone()
     end
     
     -- Posisikan di dekat ghost
-    while true do
-        local offset = Vector3.new(0, 0, 2)
-        if clonedThermometer:IsA("Model") and clonedThermometer.PrimaryPart then
-            clonedThermometer:SetPrimaryPartCFrame(CFrame.new(ghostPos + offset))
-        end
-        task.wait()
+    local offset = Vector3.new(0, 0, 2)
+    if clonedThermometer:IsA("Model") and clonedThermometer.PrimaryPart then
+        clonedThermometer:SetPrimaryPartCFrame(CFrame.new(ghostPos + offset))
     end
 
     -- Buat tidak terlihat dan tidak ada collision
