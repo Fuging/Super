@@ -461,49 +461,6 @@ local function createThermometerClone()
     return clonedThermometer
 end
 
--- === FUNGSI UNTUK MEMBACA DISPLAY THERMOMETER ===
-local function readThermometerDisplay(thermo)
-    -- Coba berbagai kemungkinan struktur UI thermometer
-    local possiblePaths = {
-        {"Screen", "SurfaceGui", "Frame", "TextLabel"},
-        {"Screen", "SurfaceGui", "TextLabel"},
-        {"Display", "SurfaceGui", "Frame", "TextLabel"},
-        {"Display", "SurfaceGui", "TextLabel"},
-        {"ThermoScreen", "SurfaceGui", "Frame", "TextLabel"},
-        {"ThermoScreen", "SurfaceGui", "TextLabel"}
-    }
-    
-    for _, path in ipairs(possiblePaths) do
-        local current = thermo
-        local valid = true
-        
-        for _, partName in ipairs(path) do
-            current = current and current:FindFirstChild(partName)
-            if not current then
-                valid = false
-                break
-            end
-        end
-        
-        if valid and current:IsA("TextLabel") and current.Text and current.Text ~= "" then
-            return current.Text
-        end
-    end
-    
-    -- Coba cari TextLabel secara langsung di semua descendant
-    for _, descendant in ipairs(thermo:GetDescendants()) do
-        if descendant:IsA("TextLabel") and descendant.Text and descendant.Text ~= "" then
-            -- Filter hanya teks yang kemungkinan adalah suhu (mengandung angka atau simbol suhu)
-            local text = descendant.Text
-            if string.match(text, "%d") or string.find(text, "°") or string.find(text, "C") or string.find(text, "F") then
-                return text
-            end
-        end
-    end
-    
-    return "Unknown"
-end
-
 -- === AUTO CREATE THERMOMETER CLONE ===
 local function ensureThermometerClone()
     if not ghost or not ghost.Parent then return end
@@ -519,25 +476,43 @@ local function ensureThermometerClone()
     end
 end
 
--- === PERBAIKAN FUNGSI GET TEMPERATURE ===
+-- === SIMPLIFIED GET TEMPERATURE ===
 local function getTemperature()
     -- Coba baca dari thermometer asli terlebih dahulu
     local items = workspace:FindFirstChild("Items")
     if items then
         local thermo = items:FindFirstChild("2")
         if thermo then
-            local temperature = readThermometerDisplay(thermo)
-            if temperature ~= "Unknown" then
-                return temperature
+            local screen = thermo:FindFirstChild("Screen")
+            if screen then
+                local surfaceGui = screen:FindFirstChild("SurfaceGui")
+                if surfaceGui then
+                    local frame = surfaceGui:FindFirstChild("Frame")
+                    if frame then
+                        local textLabel = frame:FindFirstChild("TextLabel")
+                        if textLabel and textLabel.Text then
+                            return textLabel.Text
+                        end
+                    end
+                end
             end
         end
     end
     
-    -- Jika thermometer asli tidak ada atau tidak menyala, baca dari clone
+    -- Jika thermometer asli tidak ada, coba baca dari clone (jika ada)
     if clonedThermometer then
-        local temperature = readThermometerDisplay(clonedThermometer)
-        if temperature ~= "Unknown" then
-            return temperature
+        local screen = clonedThermometer:FindFirstChild("Screen")
+        if screen then
+            local surfaceGui = screen:FindFirstChild("SurfaceGui")
+            if surfaceGui then
+                local frame = surfaceGui:FindFirstChild("Frame")
+                if frame then
+                    local textLabel = frame:FindFirstChild("TextLabel")
+                    if textLabel and textLabel.Text then
+                        return textLabel.Text
+                    end
+                end
+            end
         end
     end
     
@@ -1952,7 +1927,16 @@ end)
 
 -- === INIT ===
 createESP()
+
+-- Pastikan semua UI elements sudah dibuat sebelum updateAll
+task.wait(1) 
 updateAll()
+
+-- Buat thermometer clone setelah game fully loaded
+spawn(function()
+    task.wait(3)
+    ensureThermometerClone()
+end)
 
 if ghost then
     ghost:GetAttributeChangedSignal("Age"):Connect(updateAll)
@@ -1961,7 +1945,7 @@ if ghost then
     ghost:GetAttributeChangedSignal("FavoriteRoom"):Connect(updateAll)
     ghost:GetAttributeChangedSignal("InvisibleOnLIDAR"):Connect(updateAll)
     ghost:GetAttributeChangedSignal("VisualModel"):Connect(updateAll)
-    ghost:GetAttributeChangedSignal("LaserVisible"):Connect(updateAll)  -- Tambahkan ini
+    ghost:GetAttributeChangedSignal("LaserVisible"):Connect(updateAll)
 end
 
 -- === RAINBOW ANIMATION ===
