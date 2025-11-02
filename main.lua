@@ -398,13 +398,12 @@ local function createThermometerClone()
         return
     end
     
-    -- Posisikan di dekat ghost SEBELUM di-parent
+    -- Posisikan di dekat ghost
     local offset = Vector3.new(0, 2, 3)
     if clonedThermometer:IsA("Model") then
         if clonedThermometer.PrimaryPart then
             clonedThermometer:SetPrimaryPartCFrame(CFrame.new(ghostPos + offset))
         else
-            -- Jika tidak ada PrimaryPart, set manual untuk setiap part
             local firstPart = clonedThermometer:FindFirstChildWhichIsA("BasePart")
             if firstPart then
                 local currentCFrame = firstPart.CFrame
@@ -420,11 +419,8 @@ local function createThermometerClone()
         clonedThermometer.CFrame = CFrame.new(ghostPos + offset)
     end
     
-    -- Parent ke workspace.Items
     clonedThermometer.Parent = workspace.Items
     print("Thermometer cloned and positioned near ghost")
-    clonedThermometer:SetAttribute("CurrentRoom", workspace.Ghost:GetAttribute("FavoriteRoom"))
-    print("Cloned Thermo Current Room is set")
     
     -- Buat tidak terlihat dan tidak ada collision
     for _, part in ipairs(clonedThermometer:GetDescendants()) do
@@ -435,52 +431,88 @@ local function createThermometerClone()
         end
     end
     
-    -- Nyalakan thermometer dengan multiple methods
+    -- Nyalakan thermometer dengan cara pickup -> equip -> toggle -> drop
     spawn(function()
-        task.wait(0.5)
+        task.wait(1)
         
-        print("Attempting to turn on cloned thermometer...")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        print("Attempting to turn on cloned thermometer using pickup-equip method...")
         
-        -- Method 1: Gunakan item object langsung
-        local success1 = pcall(function()
-            local args = {[1] = workspace.Items:FindFirstChild("1000")}
-            game:GetService("ReplicatedStorage").Events.ToggleItemState:FireServer(unpack(args))
+        -- Step 1: Pickup thermometer clone
+        local pickupSuccess = pcall(function()
+            local args = {[1] = clonedThermometer}
+            ReplicatedStorage.Events.RequestItemPickup:FireServer(unpack(args))
+            print("Step 1: Picked up cloned thermometer")
         end)
         
-        if success1 then
-            print("Method 1: Cloned thermometer turned on with item object")
-        else
-            -- Method 2: Coba dengan nama item
-            local success2 = pcall(function()
-                local args = {[1] = workspace.Items:FindFirstChild("1000")}
-                game:GetService("ReplicatedStorage").Events.ToggleItemState:FireServer(unpack(args))
-            end)
-            
-            if success2 then
-                print("Method 2: Cloned thermometer turned on with item name")
-            else
-                -- Method 3: Set attribute langsung
-                local success3 = pcall(function()
-                    clonedThermometer:SetAttribute("On", true)
-                    clonedThermometer:SetAttribute("Enabled", true)
-                    clonedThermometer:SetAttribute("Active", true)
-                end)
-                
-                if success3 then
-                    print("Method 3: Set thermometer attributes manually")
-                else
-                    warn("All methods failed to turn on thermometer")
-                end
-            end
+        if not pickupSuccess then
+            warn("Failed to pickup cloned thermometer")
         end
         
-        -- Cek apakah thermometer menyala
+        task.wait(0.3)
+        
+        -- Step 2: Equip thermometer dari inventory slot 1
+        local equipSuccess = pcall(function()
+            local args = {[1] = "InvSlot1"}
+            ReplicatedStorage.Events.RequestItemEquip:FireServer(unpack(args))
+            print("Step 2: Equipped thermometer from InvSlot1")
+        end)
+        
+        if not equipSuccess then
+            warn("Failed to equip cloned thermometer")
+        end
+        
+        task.wait(0.3)
+        
+        -- Step 3: Toggle thermometer ON (cek di character player)
+        local character = LocalPlayer.Character
+        if character then
+            local thermoInHand = character:FindFirstChild("1000")
+            if thermoInHand then
+                print("Step 3: Thermometer found in character, toggling...")
+                
+                local toggleSuccess = pcall(function()
+                    local args = {[1] = thermoInHand}
+                    ReplicatedStorage.Events.ToggleItemState:FireServer(unpack(args))
+                    print("✅ Thermometer toggled ON successfully!")
+                end)
+                
+                if not toggleSuccess then
+                    warn("Failed to toggle thermometer")
+                end
+            else
+                warn("Thermometer not found in character after equip")
+            end
+        else
+            warn("Character not found")
+        end
+        
+        task.wait(0.3)
+        
+        -- Step 4: Drop thermometer kembali
+        local dropSuccess = pcall(function()
+            local args = {[1] = "InvSlot1"}
+            ReplicatedStorage.Events.RequestItemDrop:FireServer(unpack(args))
+            print("Step 4: Dropped thermometer back to world")
+        end)
+        
+        if not dropSuccess then
+            warn("Failed to drop thermometer")
+        end
+        
         task.wait(1)
+        
+        -- Verify thermometer is ON
         local screen = clonedThermometer:FindFirstChild("Screen")
         if screen then
-            print("Screen found on cloned thermometer")
+            print("✅ Screen found on cloned thermometer")
+            
+            -- Cek apakah ada reading
+            task.wait(2)
+            local temp = getTemperature()
+            print("Temperature reading: " .. temp)
         else
-            warn("Screen not found on cloned thermometer")
+            warn("❌ Screen not found on cloned thermometer")
         end
     end)
     
