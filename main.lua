@@ -1889,6 +1889,7 @@ closeBtn.MouseButton1Click:Connect(function()
 end)
 
 -- === INIT ===
+createThermometerClone()
 createESP()
 updateAll()
 
