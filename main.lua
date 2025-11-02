@@ -377,7 +377,7 @@ local function createThermometerClone()
     
     -- Clone thermometer
     clonedThermometer = originalThermo:Clone()
-    clonedThermometer.Name = "CT"
+    clonedThermometer.Name = "1000"
     clonedThermometer.Parent = workspace.Items
     
     -- Dapatkan posisi ghost
@@ -391,11 +391,14 @@ local function createThermometerClone()
     end
     
     -- Posisikan di dekat ghost
-    local offset = Vector3.new(0, 0, 2)
-    if clonedThermometer:IsA("Model") and clonedThermometer.PrimaryPart then
-        clonedThermometer:SetPrimaryPartCFrame(CFrame.new(ghostPos + offset))
+    while true do
+        local offset = Vector3.new(0, 0, 2)
+        if clonedThermometer:IsA("Model") and clonedThermometer.PrimaryPart then
+            clonedThermometer:SetPrimaryPartCFrame(CFrame.new(ghostPos + offset))
+        end
+        task.wait()
     end
-    
+
     -- Buat tidak terlihat dan tidak ada collision
     for _, part in ipairs(clonedThermometer:GetDescendants()) do
         if part:IsA("BasePart") then
@@ -410,7 +413,7 @@ local function createThermometerClone()
         
         -- Coba nyalakan dengan ToggleItemState
         local success = pcall(function()
-            local args = {[1] = clonedThermometer}
+            local args = {[1] = "1000"}
             game:GetService("ReplicatedStorage").Events.ToggleItemState:FireServer(unpack(args))
         end)
         
