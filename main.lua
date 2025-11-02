@@ -453,7 +453,6 @@ end
 local detailsEMF = nil
 local detailsSpiritBox = nil
 
--- === CHECK EMF READING ===
 local function checkEMFReading()
     -- Cek di workspace.Items["6"] terlebih dahulu
     local items = workspace:FindFirstChild("Items")
@@ -462,7 +461,12 @@ local function checkEMFReading()
         if emfItem then
             local readingLevel = emfItem:GetAttribute("ReadingLevel")
             if readingLevel then
-                return tonumber(readingLevel) or 1
+                local level = tonumber(readingLevel) or 1
+                -- Jika level 5, tambahkan evidence text
+                if level == 5 then
+                    return level, "EMF5"
+                end
+                return level, ""
             end
         end
     end
@@ -477,7 +481,11 @@ local function checkEMFReading()
             if emfItem then
                 local readingLevel = emfItem:GetAttribute("ReadingLevel")
                 if readingLevel then
-                    return tonumber(readingLevel) or 1
+                    local level = tonumber(readingLevel) or 1
+                    if level == 5 then
+                        return level, "EMF5"
+                    end
+                    return level, ""
                 end
             end
             
@@ -486,7 +494,11 @@ local function checkEMFReading()
                 if child.Name == "6" then
                     local readingLevel = child:GetAttribute("ReadingLevel")
                     if readingLevel then
-                        return tonumber(readingLevel) or 1
+                        local level = tonumber(readingLevel) or 1
+                        if level == 5 then
+                            return level, "EMF5"
+                        end
+                        return level, ""
                     end
                 end
             end
@@ -499,7 +511,11 @@ local function checkEMFReading()
         if emfItem then
             local readingLevel = emfItem:GetAttribute("ReadingLevel")
             if readingLevel then
-                return tonumber(readingLevel) or 1
+                local level = tonumber(readingLevel) or 1
+                if level == 5 then
+                    return level, "EMF5"
+                end
+                return level, ""
             end
         end
         
@@ -508,13 +524,17 @@ local function checkEMFReading()
             if child.Name == "6" then
                 local readingLevel = child:GetAttribute("ReadingLevel")
                 if readingLevel then
-                    return tonumber(readingLevel) or 1
+                    local level = tonumber(readingLevel) or 1
+                    if level == 5 then
+                        return level, "EMF5"
+                    end
+                    return level, ""
                 end
             end
         end
     end
     
-    return 0
+    return 0, ""
 end
 
 -- === CHECK SPIRIT BOX ===
@@ -679,7 +699,8 @@ local function updateAll()
     local temperature = getTemperature()
     local energy = getEnergy()
     local difficulty = getDifficulty()
-    local emfReading = checkEMFReading()
+    -- HAPUS BARIS INI: local emfReading = checkEMFReading()
+    local emfReading, emfEvidence = checkEMFReading() -- Hanya panggil sekali
     local spiritBox = checkSpiritBox()
     
     if label then
@@ -702,14 +723,16 @@ local function updateAll()
     if detailsWriting then detailsWriting.Text = "📝 Writing: " .. tostring(writing) end
     if detailsTemperature then detailsTemperature.Text = "🌡️ Temperature: " .. tostring(temperature) end
     if detailsEnergy then detailsEnergy.Text = "⚡ Energy: " .. tostring(energy) end
-    if detailsEMF then detailsEMF.Text = "📡 EMF Reading: " .. tostring(emfReading) end
-    if detailsSpiritBox then detailsSpiritBox.Text = "📻 Spirit Box: " .. tostring(spiritBox) end
-    if detailsMultiple then detailsMultiple.Text = "💀 Multiple Cursed: " .. tostring(multipleCursed) end
-    if detailsFortune then detailsFortune.Text = "🔮 Fortune Teller: " .. tostring(fortuneTeller) end
-    if detailsDifficulty then detailsDifficulty.Text = "🎯 Difficulty: " .. tostring(difficulty) end
     
-    -- Update warna berdasarkan nilai EMF
-    if detailsEMF then
+    -- Update EMF Reading dengan evidence text
+    if detailsEMF then 
+        local displayText = "📡 EMF Reading: " .. tostring(emfReading)
+        if emfEvidence ~= "" then
+            displayText = displayText .. " | Evi: " .. emfEvidence
+        end
+        detailsEMF.Text = displayText
+        
+        -- Update warna berdasarkan nilai EMF
         local emfLevel = emfReading
         if emfLevel >= 5 then
             detailsEMF.TextColor3 = Color3.fromRGB(255, 50, 50) -- Merah untuk EMF 5
@@ -720,14 +743,22 @@ local function updateAll()
         end
     end
     
-    -- Update warna Spirit Box
-    if detailsSpiritBox then
+    -- Update Spirit Box
+    if detailsSpiritBox then 
+        detailsSpiritBox.Text = "📻 Spirit Box: " .. tostring(spiritBox)
+        
+        -- Update warna Spirit Box
         if spiritBox then
             detailsSpiritBox.TextColor3 = Color3.fromRGB(100, 255, 100) -- Hijau jika aktif
         else
             detailsSpiritBox.TextColor3 = Color3.fromRGB(255, 100, 100) -- Merah jika tidak aktif
         end
     end
+    
+    -- Update evidence lainnya
+    if detailsMultiple then detailsMultiple.Text = "💀 Multiple Cursed: " .. tostring(multipleCursed) end
+    if detailsFortune then detailsFortune.Text = "🔮 Fortune Teller: " .. tostring(fortuneTeller) end
+    if detailsDifficulty then detailsDifficulty.Text = "🎯 Difficulty: " .. tostring(difficulty) end
     
     if vexLabel then
         vexLabel.Visible = invisibleLidar
