@@ -2045,7 +2045,7 @@ detailsModel.TextSize = 11
 detailsModel.TextXAlignment = Enum.TextXAlignment.Left
 
 -- EVIDENCES SECTION
-local evidencesSection = createSection(infoScroll, "EVIDENCES", UDim2.fromOffset(0, 155), 355)
+local evidencesSection = createSection(infoScroll, "EVIDENCES", UDim2.fromOffset(0, 155), 375) -- Tinggi diubah dari 355 ke 375
 
 -- Buat evidence labels secara dinamis
 local evidenceData = {
@@ -2075,7 +2075,7 @@ for i, evidence in ipairs(evidenceData) do
     detail.TextXAlignment = Enum.TextXAlignment.Left
     detail.Name = "details" .. evidence.name
     
-    -- Assign ke variabel global
+    -- Assign ke variabel global (TAMBAHKAN SUMMONING CIRCLE)
     if evidence.name == "Handprints" then detailsHandprints = detail
     elseif evidence.name == "Laser" then detailsLaser = detail
     elseif evidence.name == "GhostOrb" then detailsGhostOrb = detail
@@ -2087,13 +2087,14 @@ for i, evidence in ipairs(evidenceData) do
     elseif evidence.name == "SpiritBox" then detailsSpiritBox = detail
     elseif evidence.name == "MultipleCursed" then detailsMultiple = detail
     elseif evidence.name == "FortuneTeller" then detailsFortune = detail
-    elseif evidence.name == "Difficulty" then detailsDifficulty = detail end
+    elseif evidence.name == "Difficulty" then detailsDifficulty = detail
+    elseif evidence.name == "SummoningCircle" then detailsSummoningCircle = detail end  -- TAMBAHAN INI
 end
 
--- VEX WARNING
+-- VEX WARNING (SESUAIKAN POSISI)
 vexLabel = Instance.new("TextLabel", infoScroll)
 vexLabel.Size = UDim2.new(1, 0, 0, 25)
-vexLabel.Position = UDim2.fromOffset(0, 365)
+vexLabel.Position = UDim2.fromOffset(0, 385)  -- Diubah dari 365 ke 385
 vexLabel.BackgroundColor3 = Color3.fromRGB(50, 20, 20)
 vexLabel.Text = "⚠️ Ghost: Vex"
 vexLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
