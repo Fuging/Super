@@ -670,16 +670,10 @@ end
 local function getTemperature()
     if not ghost or not ghost.Parent then return "Unknown" end
     
-    local favoriteRoom = ghost:GetAttribute("FavoriteRoom")
+    -- Gunakan CurrentRoom saja, bukan FavoriteRoom
     local currentRoom = ghost:GetAttribute("CurrentRoom")
     
-    -- Tentukan ruangan yang akan digunakan (prioritaskan favorite room)
-    local targetRoomName = currentRoom
-    if not targetRoomName or targetRoomName == "" or targetRoomName == "Unknown" then
-        targetRoomName = favoriteRoom
-    end
-    
-    if not targetRoomName or targetRoomName == "" or targetRoomName == "Unknown" then
+    if not currentRoom or currentRoom == "" or currentRoom == "Unknown" then
         return "Unknown"
     end
     
@@ -689,17 +683,17 @@ local function getTemperature()
     local rooms = mapRooms:FindFirstChild("Rooms")
     if not rooms then return "Unknown" end
     
-    local targetRoom = rooms:FindFirstChild(targetRoomName)
+    local targetRoom = rooms:FindFirstChild(currentRoom)
     if not targetRoom then 
-        print("Room not found: " .. targetRoomName)
+        print("Room not found: " .. currentRoom)
         return "Unknown" 
     end
     
     local temperature = targetRoom:GetAttribute("Temperature")
-    local RoundedTemp = math.floor(temperature * 100) / 100
     if temperature then
-        print("Temperature from room '" .. targetRoomName .. "': " .. tostring(temperature))
-        return tostring(RoundedTemp) .. "°C"
+        local roundedTemp = math.floor(temperature * 100) / 100
+        print("Temperature from CurrentRoom '" .. currentRoom .. "': " .. tostring(roundedTemp) .. "°C")
+        return tostring(roundedTemp) .. "°C"
     end
     
     return "Unknown"
@@ -948,6 +942,59 @@ local function checkSpiritBox()
     end
     
     return false
+end
+
+-- === TP TO SPAWN ===
+local function tpToSpawn()
+    if not LocalPlayer.Character or not root then 
+        warn("Player character or root part not found")
+        return 
+    end
+    
+    -- Cari SpawnLocation di workspace.Map.Spawns
+    local map = workspace:FindFirstChild("Map")
+    if not map then
+        warn("Map not found in workspace")
+        return
+    end
+    
+    local spawns = map:FindFirstChild("Spawns")
+    if not spawns then
+        warn("Spawns folder not found in Map")
+        return
+    end
+    
+    local spawnLocation = spawns:FindFirstChild("SpawnLocation")
+    if not spawnLocation then
+        -- Jika tidak ada SpawnLocation, coba cari part lain yang mungkin sebagai spawn
+        for _, child in pairs(spawns:GetChildren()) do
+            if child:IsA("Part") or child:IsA("SpawnLocation") then
+                spawnLocation = child
+                break
+            end
+        end
+    end
+    
+    if not spawnLocation then
+        warn("SpawnLocation not found in Spawns folder")
+        return
+    end
+    
+    -- Dapatkan posisi spawn
+    local spawnPos
+    if spawnLocation:IsA("SpawnLocation") then
+        spawnPos = spawnLocation.Position
+    elseif spawnLocation:IsA("Part") then
+        spawnPos = spawnLocation.Position
+    else
+        warn("SpawnLocation is not a valid part")
+        return
+    end
+    
+    -- Teleport player ke spawn position
+    local groundPos = findGroundPosition(spawnPos)
+    root.CFrame = CFrame.new(groundPos)
+    print("Teleported to Spawn Location")
 end
 
 -- === UPDATE TEXT & DETAILS (DENGAN SEMUA EVIDENCE) ===
@@ -1875,12 +1922,13 @@ local itemsEspToggle = createToggleButton(espSection2, "Items ESP: OFF", UDim2.n
 local cursedEspToggle = createToggleButton(espSection2, "Cursed ESP: OFF", UDim2.new(0.51, 0, 0, 55), false, Color3.fromRGB(150, 150, 0))
 
 -- === TELEPORT TAB CONTENT ===
-local tpSection1 = createSection(teleportContent, "LOCATION TELEPORT", UDim2.fromOffset(0, 5), 120)
+local tpSection1 = createSection(teleportContent, "LOCATION TELEPORT", UDim2.fromOffset(0, 5), 150) -- Tinggi diubah dari 120 ke 150
 local tpToGhostBtn = createActionButton(tpSection1, "👻 TP TO GHOST", UDim2.fromOffset(5, 25), Color3.fromRGB(180, 80, 255))
 local tpGhostToMeBtn = createActionButton(tpSection1, "👻 TP GHOST TO ME", UDim2.fromOffset(5, 58), Color3.fromRGB(160, 60, 255))
 local tpToFuseboxBtn = createActionButton(tpSection1, "⚡ TP TO FUSEBOX", UDim2.fromOffset(5, 91), Color3.fromRGB(255, 200, 0))
+local tpToSpawnBtn = createActionButton(tpSection1, "🏠 TP TO SPAWN", UDim2.fromOffset(5, 124), Color3.fromRGB(100, 200, 100)) -- Tombol baru
 
-local tpSection2 = createSection(teleportContent, "ITEM TELEPORT", UDim2.fromOffset(0, 135), 120)
+local tpSection2 = createSection(teleportContent, "ITEM TELEPORT", UDim2.fromOffset(0, 165), 120) -- Position Y diubah dari 135 ke 165
 local tpToCursedBtn = createActionButton(tpSection2, "💀 TP TO CURSED ITEM", UDim2.fromOffset(5, 25), Color3.fromRGB(200, 50, 50))
 local bringItemsBtn = createActionButton(tpSection2, "📦 BRING ITEMS TO ME", UDim2.fromOffset(5, 58), Color3.fromRGB(80, 180, 255))
 local bringCursedBtn = createActionButton(tpSection2, "💀 BRING CURSED ITEMS", UDim2.fromOffset(5, 91), Color3.fromRGB(180, 40, 40))
@@ -2169,6 +2217,7 @@ tpAllItemsBtn.MouseButton1Click:Connect(tpAllItems)
 tpCursedItemsBtn.MouseButton1Click:Connect(tpCursedPossession)
 tpHouseItemsBtn.MouseButton1Click:Connect(tpHouseItems)
 turnOnElectronicBtn.MouseButton1Click:Connect(turnOnAllElectronic)
+tpToSpawnBtn.MouseButton1Click:Connect(tpToSpawn)
 deleteExitBtn.MouseButton1Click:Connect(deleteExitDoor)
 
 -- Window controls
