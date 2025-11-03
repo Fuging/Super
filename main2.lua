@@ -1650,6 +1650,7 @@ local function deleteExitDoor()
 end
 
 -- === PERBAIKAN TP TO CURSED ITEMS ===
+-- === TP TO CURSED ITEMS (IMPROVED) ===
 local function tpToCursedItems()
     if not LocalPlayer.Character or not root then return end
     
@@ -1687,57 +1688,48 @@ local function tpToCursedItems()
     
     print("Found cursed item: " .. cursedItem.Name)
     
-    -- Dapatkan posisi cursed item
-    local cursedPos, cursedSize
+    -- Dapatkan posisi dan ukuran cursed item
+    local cursedPos, cursedSize, cursedCFrame
     if cursedItem:IsA("BasePart") then
         cursedPos = cursedItem.Position
         cursedSize = cursedItem.Size
+        cursedCFrame = cursedItem.CFrame
     elseif cursedItem:IsA("Model") and cursedItem.PrimaryPart then
         cursedPos = cursedItem.PrimaryPart.Position
         cursedSize = cursedItem.PrimaryPart.Size
+        cursedCFrame = cursedItem.PrimaryPart.CFrame
     else
         -- Jika tidak bisa mendapatkan PrimaryPart, coba cari part pertama
         local firstPart = cursedItem:FindFirstChildWhichIsA("BasePart")
         if firstPart then
             cursedPos = firstPart.Position
             cursedSize = firstPart.Size
+            cursedCFrame = firstPart.CFrame
         else
             warn("Cannot find position for cursed item")
             return
         end
     end
     
-    -- Tentukan posisi teleport berdasarkan ukuran item
-    local offset
+    -- Tentukan posisi teleport berdasarkan tinggi item
+    local teleportPos
     if cursedSize.Y > 5 then
-        -- Item tinggi (seperti Ouija Board), teleport di depan
-        offset = Vector3.new(0, 0, 5)
+        -- Item tinggi (seperti Ouija Board) - teleport di DEPAN item
+        local lookVector = cursedCFrame.lookVector
+        teleportPos = cursedPos + (lookVector * 3) -- 3 stud di depan
+        teleportPos = teleportPos + Vector3.new(0, 2, 0) -- Naik 2 stud
+        print("Item tinggi - Teleport di DEPAN item")
     else
-        -- Item pendek, teleport di tengah (sedikit ke atas)
-        offset = Vector3.new(0, 2, 0)
+        -- Item pendek - teleport di ATAS item (tengah-tengah)
+        teleportPos = cursedPos + Vector3.new(0, cursedSize.Y/2 + 2, 0) -- Tengah atas + 2 stud
+        print("Item pendek - Teleport di ATAS item")
     end
     
-    -- Dapatkan CFrame cursed item untuk menentukan arah depan
-    local cursedCFrame
-    if cursedItem:IsA("BasePart") then
-        cursedCFrame = cursedItem.CFrame
-    elseif cursedItem:IsA("Model") and cursedItem.PrimaryPart then
-        cursedCFrame = cursedItem.PrimaryPart.CFrame
-    else
-        local firstPart = cursedItem:FindFirstChildWhichIsA("BasePart")
-        if firstPart then
-            cursedCFrame = firstPart.CFrame
-        else
-            cursedCFrame = CFrame.new(cursedPos)
-        end
-    end
+    -- Dapatkan CFrame untuk menghadap ke cursed item
+    local lookAtCFrame = CFrame.new(teleportPos, cursedPos)
+    root.CFrame = lookAtCFrame
     
-    -- Teleport ke posisi yang ditentukan dengan menghadap ke cursed item
-    local lookVector = cursedCFrame.lookVector
-    local teleportPos = cursedPos + (lookVector * offset.Z) + Vector3.new(0, offset.Y, 0)
-    
-    root.CFrame = CFrame.new(teleportPos, cursedPos)
-    print("Teleported to Cursed Item")
+    print("✅ Berhasil teleport ke Cursed Item")
 end
 
 -- === MAIN GUI - COMPACT VERSION ===
