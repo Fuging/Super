@@ -945,117 +945,57 @@ local function checkSpiritBox()
 end
 
 -- === TP TO SPAWN ===
--- === TP TO SPAWN ===
 local function tpToSpawn()
     -- Pastikan character dan root ada
-    if not LocalPlayer.Character then
-        LocalPlayer.CharacterAdded:Wait()
-        task.wait(1)
-    end
-    
-    local character = LocalPlayer.Character
-    if not character then
-        warn("Character not found")
-        return
-    end
-    
-    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-    if not humanoidRootPart then
-        character:WaitForChild("HumanoidRootPart", 5)
-        humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-    end
-    
-    if not humanoidRootPart then
-        warn("HumanoidRootPart not found")
+    if not LocalPlayer.Character or not root then
+        warn("Player character not ready")
         return
     end
 
-    print("Mencari spawn location...")
+    print("Mencari SpawnLocation di Workspace.Map.Spawns...")
     
-    -- Cari SpawnLocation dengan berbagai alternatif
-    local spawnLocation = nil
-    
-    -- Alternatif 1: workspace.Map.Spawns.SpawnLocation
-    local map = workspace:FindFirstChild("Map")
-    if map then
-        local spawns = map:FindFirstChild("Spawns")
-        if spawns then
-            spawnLocation = spawns:FindFirstChild("SpawnLocation")
-            if spawnLocation then
-                print("Found SpawnLocation di Map.Spawns")
-            end
-        end
-    end
-    
-    -- Alternatif 2: Cari langsung di workspace
-    if not spawnLocation then
-        spawnLocation = workspace:FindFirstChild("SpawnLocation")
+    -- Cek langsung di Workspace.Map.Spawns.SpawnLocation
+    local spawnLocation = workspace:FindFirstChild("Map")
+    if spawnLocation then
+        spawnLocation = spawnLocation:FindFirstChild("Spawns")
         if spawnLocation then
-            print("Found SpawnLocation langsung di workspace")
-        end
-    end
-    
-    -- Alternatif 3: Cari model atau part dengan nama mengandung "spawn"
-    if not spawnLocation then
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if (obj:IsA("Part") or obj:IsA("Model")) and 
-               string.lower(obj.Name):find("spawn") then
-                spawnLocation = obj
-                print("Found spawn object: " .. obj.Name)
-                break
-            end
-        end
-    end
-    
-    -- Alternatif 4: Cari di tempat lain yang umum
-    if not spawnLocation then
-        -- Cek di luar Map
-        for _, obj in pairs(workspace:GetChildren()) do
-            if obj:IsA("Part") and string.lower(obj.Name):find("spawn") then
-                spawnLocation = obj
-                break
-            end
+            spawnLocation = spawnLocation:FindFirstChild("SpawnLocation")
         end
     end
 
     if not spawnLocation then
-        warn("SpawnLocation tidak ditemukan!")
-        print("Mencoba struktur alternatif...")
-        
-        -- Debug: Print semua children workspace untuk analisis
-        print("Children workspace:")
-        for _, child in pairs(workspace:GetChildren()) do
-            print(" - " .. child.Name)
-        end
+        warn("❌ SpawnLocation tidak ditemukan di Workspace.Map.Spawns")
         return
     end
 
+    print("✅ SpawnLocation ditemukan!")
+    
     -- Dapatkan posisi spawn
     local spawnPos
     if spawnLocation:IsA("Model") then
         if spawnLocation.PrimaryPart then
             spawnPos = spawnLocation.PrimaryPart.Position
         else
+            -- Jika model tidak ada PrimaryPart, cari part pertama
             local firstPart = spawnLocation:FindFirstChildWhichIsA("BasePart")
             if firstPart then
                 spawnPos = firstPart.Position
             else
-                warn("Model spawn tidak memiliki part")
+                warn("Model SpawnLocation tidak memiliki part")
                 return
             end
         end
-    elseif spawnLocation:IsA("Part") then
+    elseif spawnLocation:IsA("BasePart") then
         spawnPos = spawnLocation.Position
     else
-        warn("Tipe spawn location tidak dikenali: " .. spawnLocation.ClassName)
+        warn("Tipe SpawnLocation tidak dikenali: " .. spawnLocation.ClassName)
         return
     end
 
-    print("Spawn position: " .. tostring(spawnPos))
+    -- Teleport ke atas SpawnLocation
+    local teleportPos = spawnPos + Vector3.new(0, 3, 0) -- 3 stud di atas spawn
+    root.CFrame = CFrame.new(teleportPos)
     
-    -- Teleport player ke spawn position
-    local groundPos = findGroundPosition(spawnPos)
-    humanoidRootPart.CFrame = CFrame.new(groundPos)
     print("✅ Berhasil teleport ke Spawn Location!")
 end
 
@@ -1155,21 +1095,16 @@ local function updateAll()
 end
 
 -- === FIND GROUND POSITION ===
--- === FIND GROUND POSITION ===
 local function findGroundPosition(position)
     local rayOrigin = position + Vector3.new(0, 10, 0)
     local rayDirection = Vector3.new(0, -100, 0)
     local raycastParams = RaycastParams.new()
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-    if LocalPlayer.Character then
-        raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-    else
-        raycastParams.FilterDescendantsInstances = {}
-    end
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
     
     local rayResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
     if rayResult then
-        return rayResult.Position + Vector3.new(0, 2, 0) -- Naik sedikit di atas ground
+        return rayResult.Position + Vector3.new(0, 5, 0) -- 3 stud di atas ground
     end
     return position
 end
