@@ -28,6 +28,7 @@ local witheredEverDetected = false
 local writingEverDetected = false
 local emf5EverDetected = false
 local laserVisibleEver = false
+local summoningCircleEverDetected = false  -- Variabel baru
 
 -- === ESP OBJECTS ===
 local billboard, label, box, attach1, attach2, beam
@@ -999,6 +1000,35 @@ local function tpToSpawn()
     print("✅ Berhasil teleport ke Spawn Location!")
 end
 
+-- === CHECK SUMMONING CIRCLE ===
+local function checkSummoningCircle()
+    local cursedHolder = workspace:FindFirstChild("CursedPossessionHolder")
+    if not cursedHolder then
+        return false
+    end
+    
+    -- Cari item dengan ID 100 di CursedPossessionHolder
+    local item100 = cursedHolder:FindFirstChild("100")
+    if not item100 then
+        return false
+    end
+    
+    -- Cek apakah ada object bernama "Candle" di dalam item100
+    local candle = item100:FindFirstChild("Candle")
+    if candle then
+        return true
+    end
+    
+    -- Cek juga di seluruh descendants untuk memastikan
+    for _, descendant in pairs(item100:GetDescendants()) do
+        if descendant.Name == "Candle" then
+            return true
+        end
+    end
+    
+    return false
+end
+
 -- === UPDATE TEXT & DETAILS (DENGAN SEMUA EVIDENCE) ===
 local function updateAll()
     if not ghost or not ghost.Parent then return end
@@ -1028,6 +1058,12 @@ local function updateAll()
     local difficulty = getDifficulty()
     local emfReading, emfEvidence = checkEMFReading()
     local spiritBox = checkSpiritBox()
+    local summoningCircle = checkSummoningCircle()
+    
+    -- Update status permanen untuk Summoning Circle
+    if summoningCircle then
+        summoningCircleEverDetected = true
+    end
     
     if label then
         label.Text = "Ghost | Age: " .. age
@@ -1078,6 +1114,18 @@ local function updateAll()
             detailsSpiritBox.TextColor3 = Color3.fromRGB(100, 255, 100) -- Hijau jika aktif
         else
             detailsSpiritBox.TextColor3 = Color3.fromRGB(255, 100, 100) -- Merah jika tidak aktif
+        end
+    end
+    
+    -- Update Summoning Circle
+    if detailsSummoningCircle then 
+        detailsSummoningCircle.Text = "🕯️ Summoning Circle: " .. tostring(summoningCircleEverDetected)
+        
+        -- Update warna Summoning Circle
+        if summoningCircleEverDetected then
+            detailsSummoningCircle.TextColor3 = Color3.fromRGB(100, 255, 100) -- Hijau jika terdeteksi
+        else
+            detailsSummoningCircle.TextColor3 = Color3.fromRGB(255, 100, 100) -- Merah jika tidak
         end
     end
     
@@ -1649,8 +1697,7 @@ local function deleteExitDoor()
     end
 end
 
--- === PERBAIKAN TP TO CURSED ITEMS ===
--- === TP TO CURSED ITEMS (IMPROVED) ===
+-- === TP TO CURSED ITEMS (FIXED) ===
 local function tpToCursedItems()
     if not LocalPlayer.Character or not root then return end
     
@@ -1717,19 +1764,17 @@ local function tpToCursedItems()
         -- Item tinggi (seperti Ouija Board) - teleport di DEPAN item
         local lookVector = cursedCFrame.lookVector
         teleportPos = cursedPos + (lookVector * 3) -- 3 stud di depan
-        teleportPos = teleportPos + Vector3.new(0, 2, 0) -- Naik 2 stud
-        print("Item tinggi - Teleport di DEPAN item")
+        teleportPos = findGroundPosition(teleportPos) -- Pastikan di tanah
     else
-        -- Item pendek - teleport di ATAS item (tengah-tengah)
-        teleportPos = cursedPos + Vector3.new(0, cursedSize.Y/2 + 2, 0) -- Tengah atas + 2 stud
-        print("Item pendek - Teleport di ATAS item")
+        -- Item pendek - teleport di ATAS tanah di posisi item
+        teleportPos = findGroundPosition(cursedPos) -- Pastikan di tanah
     end
     
     -- Dapatkan CFrame untuk menghadap ke cursed item
     local lookAtCFrame = CFrame.new(teleportPos, cursedPos)
     root.CFrame = lookAtCFrame
     
-    print("✅ Berhasil teleport ke Cursed Item")
+    print("✅ Berhasil teleport ke Cursed Item (di tanah)")
 end
 
 -- === MAIN GUI - COMPACT VERSION ===
@@ -2015,7 +2060,8 @@ local evidenceData = {
     {name = "SpiritBox", icon = "📻", color = Color3.fromRGB(200, 100, 255)},
     {name = "MultipleCursed", icon = "💀", color = Color3.fromRGB(255, 100, 100)},
     {name = "FortuneTeller", icon = "🔮", color = Color3.fromRGB(200, 150, 255)},
-    {name = "Difficulty", icon = "🎯", color = Color3.fromRGB(255, 100, 100)}
+    {name = "Difficulty", icon = "🎯", color = Color3.fromRGB(255, 100, 100)},
+    {name = "SummoningCircle", icon = "🕯️", color = Color3.fromRGB(255, 200, 100)}  -- Tambahan baru
 }
 
 for i, evidence in ipairs(evidenceData) do
