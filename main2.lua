@@ -2074,8 +2074,9 @@ for i, evidence in ipairs(evidenceData) do
     detail.TextSize = 10
     detail.TextXAlignment = Enum.TextXAlignment.Left
     detail.Name = "details" .. evidence.name
+    detail.Text = evidence.icon .. " " .. evidence.name .. ": Unknown"  -- TEKS AWAL DITAMBAHKAN
     
-    -- Assign ke variabel global (TAMBAHKAN SUMMONING CIRCLE)
+    -- Assign ke variabel global
     if evidence.name == "Handprints" then detailsHandprints = detail
     elseif evidence.name == "Laser" then detailsLaser = detail
     elseif evidence.name == "GhostOrb" then detailsGhostOrb = detail
