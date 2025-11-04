@@ -1730,7 +1730,7 @@ local function tpToCursedItems()
         offset = Vector3.new(0, 0, 5)
     else
         -- Item pendek, teleport di tengah (sedikit ke atas)
-        offset = Vector3.new(0, 2, 0)
+        offset = Vector3.new(0, 5, 0)
     end
     
     -- Dapatkan CFrame cursed item untuk menentukan arah depan
