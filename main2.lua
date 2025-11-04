@@ -711,7 +711,8 @@ end
 -- === CHECK ENERGY ===
 local function getEnergy()
     local localPlayer = game:GetService("Players").LocalPlayer
-    local result = localPlayer:GetAttribute("Energy")
+    local rawresult = localPlayer:GetAttribute("Energy")
+    local result = math.floor(rawresult * 100) / 100
     if result then
         return tostring(result)
     end
@@ -1264,7 +1265,7 @@ local function bringItemsToMe()
             
             if itemPos then
                 local distance = (itemPos - root.Position).Magnitude
-                if distance > 15 then  -- Hanya ambil item yang jaraknya > 15 stud
+                if distance > 5 then  -- Hanya ambil item yang jaraknya > 15 stud
                     table.insert(regularItems, item)
                     print("Item " .. item.Name .. " will be processed (distance: " .. math.floor(distance) .. " studs)")
                 else
@@ -1419,7 +1420,7 @@ local function bringCursedItemsToMe()
             
             if itemPos then
                 local distance = (itemPos - root.Position).Magnitude
-                if distance > 15 then  -- Hanya ambil item yang jaraknya > 15 stud
+                if distance > 5 then  -- Hanya ambil item yang jaraknya > 15 stud
                     table.insert(cursedItems, item)
                     print("Cursed Item " .. item.Name .. " will be processed (distance: " .. math.floor(distance) .. " studs)")
                 else
