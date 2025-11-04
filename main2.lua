@@ -672,7 +672,7 @@ local function getTemperature()
     if not ghost or not ghost.Parent then return "Unknown" end
     
     -- Gunakan CurrentRoom saja, bukan FavoriteRoom
-    local currentRoom = ghost:GetAttribute("CurrentRoom")
+    local currentRoom = ghost:GetAttribute("FavoriteRoom")
     
     if not currentRoom or currentRoom == "" or currentRoom == "Unknown" then
         return "Unknown"
@@ -1152,7 +1152,7 @@ local function findGroundPosition(position)
     
     local rayResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
     if rayResult then
-        return rayResult.Position + Vector3.new(0, 5, 0) -- 3 stud di atas ground
+        return rayResult.Position + Vector3.new(0, 3, 0) -- 3 stud di atas ground
     end
     return position
 end
@@ -1207,7 +1207,7 @@ local function tpCursedPossession()
             if item:IsA("BasePart") or item:IsA("Model") then
                 local targetPart = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart", true)
                 if targetPart then
-                    local groundPos = findGroundPosition(root.Position + Vector3.new(math.random(-3, 3), 0, math.random(-3, 3)))
+                    local groundPos = findGroundPosition(root.Position)
                     
                     if targetPart:IsA("BasePart") then
                         targetPart.CFrame = CFrame.new(groundPos)
