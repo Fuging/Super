@@ -712,7 +712,7 @@ end
 local function getEnergy()
     local localPlayer = game:GetService("Players").LocalPlayer
     local rawresult = localPlayer:GetAttribute("Energy")
-    local result = math.floor(rawresult * 100) / 100
+    local result = string.format("%.2f", rawresult)
     if result then
         return tostring(result)
     end
