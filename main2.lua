@@ -710,47 +710,14 @@ end
 
 -- === CHECK ENERGY ===
 local function getEnergy()
-    local success, result = pcall(function()
-        local energyMonitor = LocalPlayer.PlayerGui:FindFirstChild("EnergyMonitor")
-        if not energyMonitor then return "Unknown" end
-        
-        local container = energyMonitor:FindFirstChild("Container")
-        if not container then return "Unknown" end
-        
-        local playerList = container:FindFirstChild("PlayerList")
-        if not playerList then return "Unknown" end
-        
-        -- Cari semua elemen yang mungkin mengandung nilai energy
-        for _, child in pairs(playerList:GetChildren()) do
-            -- Cek jika ini adalah SelectionImageObject atau Frame
-            if child:IsA("Frame") or child:IsA("ImageButton") or child.ClassName == "SelectionImageObject" then
-                -- Cari child bernama "Energy" atau teks yang mengandung nilai energy
-                local energyChild = child:FindFirstChild("Energy")
-                if energyChild then
-                    if energyChild:IsA("TextLabel") then
-                        return energyChild.Text
-                    elseif energyChild:IsA("ImageLabel") then
-                        -- Jika berupa gambar, coba baca dari atribut atau properti lain
-                        return "Visual"
-                    end
-                end
-                
-                -- Coba cari TextLabel langsung di dalam child
-                for _, descendant in pairs(child:GetDescendants()) do
-                    if descendant:IsA("TextLabel") and string.find(string.lower(descendant.Text or ""), "energy") then
-                        return descendant.Text
-                    elseif descendant:IsA("TextLabel") and string.match(descendant.Text or "", "%d+%%?") then
-                        return descendant.Text
-                    end
-                end
-            end
-        end
-        
-        return "Unknown"
-    end)
-    
-    return success and result or "Unknown"
+    local localPlayer = game:GetService("Players").LocalPlayer
+    local result = localPlayer:GetAttribute("Energy")
+    if result then
+        return tostring(result)
+    end
+    return "Unknown"
 end
+
 
 -- === CHECK EMF READING ===
 local function checkEMFReading()
